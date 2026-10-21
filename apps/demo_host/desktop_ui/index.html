@@ -1,0 +1,458 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="app.css">
+  <title>ESPAgent</title>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="rail" aria-label="主导航">
+      <div class="brand-block">
+        <span class="brand-mark" aria-hidden="true">■</span>
+        <div>
+          <strong>ESPAgent</strong>
+          <span>COMPANION DESK</span>
+        </div>
+      </div>
+
+      <nav class="nav-list">
+        <button class="nav-item is-active" data-view="overview" aria-current="page">
+          <span class="nav-glyph" aria-hidden="true">⌂</span><span>总览</span>
+        </button>
+        <button class="nav-item" data-view="modules">
+          <span class="nav-glyph" aria-hidden="true">▦</span><span>模块</span>
+        </button>
+        <button class="nav-item" data-view="assistant" data-scene="hermes">
+          <span class="nav-glyph" aria-hidden="true">◇</span><span>助手</span>
+        </button>
+        <button class="nav-item" data-view="home" data-scene="lights">
+          <span class="nav-glyph" aria-hidden="true">◉</span><span>家居</span>
+        </button>
+        <button class="nav-item" data-view="display">
+          <span class="nav-glyph" aria-hidden="true">▣</span><span>显示</span>
+        </button>
+        <button class="nav-item" data-view="firmware">
+          <span class="nav-glyph" aria-hidden="true">⇩</span><span>固件</span>
+        </button>
+        <button class="nav-item" data-view="settings">
+          <span class="nav-glyph" aria-hidden="true">⚙</span><span>设置</span>
+        </button>
+        <button class="nav-item" data-view="diagnostics">
+          <span class="nav-glyph" aria-hidden="true">⌁</span><span>诊断</span>
+        </button>
+      </nav>
+
+      <div class="module-nav-block" id="module-nav-block" hidden>
+        <span class="nav-section-label">MODULES</span>
+        <nav class="nav-list module-nav-list" id="module-nav" aria-label="已固定模块"></nav>
+      </div>
+
+      <div class="rail-footer">
+        <div class="rail-device">
+          <span id="rail-device-dot" class="status-dot"></span>
+          <div><strong id="rail-device-state">ESP32 离线</strong><span id="rail-device-ip">等待状态</span></div>
+        </div>
+        <span class="build-label" id="app-build-label">VERSION -- / 240×320</span>
+      </div>
+    </aside>
+
+    <div class="workspace">
+      <header class="topbar">
+        <div>
+          <span class="eyebrow">ESP32-S3 COMPANION</span>
+          <h1 id="view-title">总览</h1>
+        </div>
+        <div class="top-status">
+          <button id="esp-control-toggle" class="status-token control-token" type="button" aria-pressed="false" title="ESP32 屏幕控制 · Alt + `">
+            <i></i><span>ESP CTRL</span><kbd>Alt+`</kbd>
+          </button>
+          <span id="top-hermes" class="status-token"><i></i>Hermes</span>
+          <span id="top-home" class="status-token"><i></i>Home</span>
+          <span id="top-display" class="status-token"><i></i>Display</span>
+        </div>
+      </header>
+
+      <main class="view-stack">
+        <section class="view is-active" data-view-panel="overview" aria-labelledby="view-title">
+          <div class="overview-grid">
+            <div class="overview-main">
+              <section class="intro-band">
+                <span class="section-index">01 / SYSTEM</span>
+                <h2>伴随终端正在运行</h2>
+                <p id="overview-summary">正在读取本机服务和设备状态。</p>
+                <div class="quick-actions">
+                  <button class="primary-command" data-go="assistant">打开助手 <span>→</span></button>
+                  <button class="secondary-command" data-go="home">控制家居</button>
+                </div>
+              </section>
+
+              <section class="metric-strip" aria-label="实时指标">
+                <div><span>HOST</span><strong id="overview-host-fps">0.0</strong><small>FPS</small></div>
+                <div><span>LCD</span><strong id="overview-lcd-fps">0.0</strong><small>FPS</small></div>
+                <div><span>LAG</span><strong id="overview-lag">0</strong><small>FRAMES</small></div>
+                <div><span>MODE</span><strong id="overview-mode">I2</strong><small id="overview-mode-note">INDEXED</small></div>
+              </section>
+
+              <section class="activity-band">
+                <div class="section-heading"><div><span class="section-index">02 / ACTIVITY</span><h2>当前活动</h2></div></div>
+                <div class="activity-list">
+                  <div class="activity-row"><span class="activity-key">HERMES</span><strong id="overview-hermes-activity">待命</strong><small id="overview-hermes-time">本机会话</small></div>
+                  <div class="activity-row"><span class="activity-key">LIGHT</span><strong id="overview-light-activity">设备离线</strong><small id="overview-light-detail">0%</small></div>
+                  <div class="activity-row"><span class="activity-key">DISPLAY</span><strong id="overview-display-activity">等待设备</strong><small id="overview-display-detail">frame --</small></div>
+                </div>
+              </section>
+            </div>
+
+            <aside class="device-stage" aria-label="ESP32 屏幕预览">
+              <div class="device-stage-head"><span>LIVE DISPLAY</span><span id="overview-preview-fps">-- FPS</span></div>
+              <div class="screen-frame"><img class="live-preview" alt="ESP32 实时画面预览"></div>
+              <div class="device-stage-foot">
+                <span id="overview-frame-id">FRAME --</span>
+                <button class="icon-command" data-scene="link" title="在设备上显示 Link 页面" aria-label="显示 Link 页面">↗</button>
+              </div>
+            </aside>
+          </div>
+        </section>
+
+        <section class="view" data-view-panel="modules" aria-labelledby="view-title">
+          <div class="module-catalog-head">
+            <div><span class="section-index">01 / MODULE RUNTIME</span><h2>已安装模块</h2></div>
+            <p>模块独立提供状态、动作和设备场景。关闭后停止后台运行，并保留配置供下次启用。</p>
+          </div>
+          <div class="module-catalog" id="module-catalog" aria-live="polite">
+            <div class="module-empty">正在读取模块清单…</div>
+          </div>
+        </section>
+
+        <section class="view module-host-view" data-view-panel="module-host" aria-labelledby="view-title">
+          <iframe id="module-frame" class="module-frame" title="模块界面"></iframe>
+        </section>
+
+        <section class="view" data-view-panel="assistant" aria-labelledby="view-title">
+          <div class="assistant-layout">
+            <section class="assistant-thread">
+              <div class="section-heading">
+                <div><span class="section-index">01 / HERMES</span><h2>当前会话</h2></div>
+                <div class="command-row compact">
+                  <button class="secondary-command" id="assistant-new-session">新会话</button>
+                  <button class="danger-command" id="assistant-interrupt">打断</button>
+                </div>
+              </div>
+              <div class="reply-surface">
+                <div class="reply-meta"><span id="assistant-activity">在线 - 待命</span><span id="assistant-session">LOCAL SESSION</span></div>
+                <div id="assistant-reply" class="reply-body">等待 Hermes 回复</div>
+                <div id="assistant-tool" class="tool-line" hidden></div>
+              </div>
+              <form id="assistant-form" class="composer">
+                <textarea id="assistant-prompt" rows="3" placeholder="向 Hermes 发送消息" required></textarea>
+                <div class="composer-actions">
+                  <span id="assistant-send-status" role="status"></span>
+                  <button class="primary-command" type="submit">发送 <span>→</span></button>
+                </div>
+              </form>
+            </section>
+
+            <aside class="assistant-side">
+              <section class="side-tool">
+                <span class="section-index">VOICE INPUT</span>
+                <div class="tool-status"><strong id="voice-status">未启用</strong><span id="voice-detail">正在检测能力</span></div>
+                <div class="command-row">
+                  <button class="secondary-command" id="voice-enable">启用麦克风</button>
+                  <button class="record-command" id="voice-record" aria-pressed="false">开始说话</button>
+                </div>
+                <label class="field-line"><span>静音结束</span><input id="voice-silence" type="number" min="0.5" max="10" step="0.5" value="2"><em>秒</em></label>
+              </section>
+              <section class="side-tool">
+                <span class="section-index">SPEECH OUTPUT</span>
+                <div class="tool-status"><strong id="audio-status">静音</strong><span id="audio-detail">队列 0 · 0 KB</span></div>
+              </section>
+              <section class="side-tool transcript-tool">
+                <span class="section-index">LAST TRANSCRIPT</span>
+                <p id="voice-transcript">尚无语音转写</p>
+              </section>
+            </aside>
+          </div>
+        </section>
+
+        <section class="view" data-view-panel="home" aria-labelledby="view-title">
+          <div class="home-layout">
+            <section class="light-stage">
+              <span class="section-index">01 / HOME ASSISTANT</span>
+              <div class="light-name-line"><div><h2 id="light-name">客厅主灯</h2><span id="light-entity">light.demo_light</span></div><span id="light-online" class="state-label">离线</span></div>
+              <div class="light-visual" id="light-visual">
+                <div class="light-disc"><span id="light-percent">0</span><small>%</small></div>
+                <strong id="light-power-label">已关闭</strong>
+              </div>
+              <div class="light-control-band">
+                <div class="power-line"><span>电源</span><button id="light-power" class="switch-control" role="switch" aria-checked="false"><span></span></button></div>
+                <label class="range-field"><span>亮度</span><input id="light-brightness" type="range" min="1" max="100" value="40"><output id="light-brightness-output">40%</output></label>
+                <label class="range-field color-temperature-field"><span>色温</span><input id="light-temperature-control" type="range" min="2000" max="6500" step="50" value="4000"><output id="light-temperature-output">4000 K</output></label>
+                <div class="preset-row" aria-label="亮度预设">
+                  <button data-light-level="25">25</button><button data-light-level="50">50</button><button data-light-level="75">75</button><button data-light-level="100">100</button>
+                </div>
+              </div>
+            </section>
+
+            <aside class="home-status">
+              <span class="section-index">DEVICE STATE</span>
+              <dl class="definition-list">
+                <div><dt>同步</dt><dd id="light-sync">等待连接</dd></div>
+                <div><dt>色温</dt><dd id="light-temperature">-- K</dd></div>
+                <div><dt>范围</dt><dd id="light-temperature-range">2000–6500 K</dd></div>
+                <div><dt>状态</dt><dd id="light-error">无错误</dd></div>
+              </dl>
+            </aside>
+          </div>
+        </section>
+
+        <section class="view" data-view-panel="display" aria-labelledby="view-title">
+          <div class="display-layout">
+            <aside class="device-stage display-preview-stage">
+              <div class="device-stage-head"><span>DEVICE OUTPUT</span><span id="display-preview-fps">-- FPS</span></div>
+              <div class="screen-frame"><img class="live-preview" alt="ESP32 显示输出"></div>
+              <div class="device-stage-foot"><span id="display-frame-id">FRAME --</span><a class="icon-command" href="/screen/" target="_blank" title="打开独立设备 UI" aria-label="打开设备 UI">↗</a></div>
+            </aside>
+
+            <div class="display-controls">
+              <section class="settings-band">
+                <div class="section-heading"><div><span class="section-index">01 / TRANSPORT</span><h2>传输模式</h2></div><span id="transport-sync" class="state-label">等待同步</span></div>
+                <div class="segmented-control" id="transport-control">
+                  <button data-transport="indexed" aria-pressed="true">Indexed LZ4</button>
+                  <button data-transport="mjpeg" aria-pressed="false">MJPEG</button>
+                </div>
+                <div class="mode-settings" data-transport-panel="indexed">
+                  <label class="field-line"><span>索引格式</span><select id="indexed-bpp"><option value="1">I1 · 2 色</option><option value="2">I2 · 4 色</option><option value="4">I4 · 16 色</option><option value="8">I8 · 256 色</option></select></label>
+                  <div class="format-note"><strong id="indexed-capacity">4 COLORS</strong><span>完整帧 + LZ4 · 关键帧间隔 60</span></div>
+                </div>
+                <div class="mode-settings" data-transport-panel="mjpeg" hidden>
+                  <label class="range-field"><span>JPEG 质量</span><input id="mjpeg-quality" type="range" min="40" max="100" value="90"><output id="mjpeg-quality-output">90</output></label>
+                  <label class="field-line"><span>色度采样</span><select id="mjpeg-subsampling"><option value="420">4:2:0</option><option value="422">4:2:2</option><option value="444">4:4:4</option></select></label>
+                  <div class="power-line"><span>NACK 重传</span><button id="nack-toggle" class="switch-control" role="switch" aria-checked="false"><span></span></button></div>
+                </div>
+              </section>
+
+              <section class="settings-band">
+                <span class="section-index">02 / PANEL</span>
+                <label class="range-field"><span>背光</span><input id="backlight" type="range" min="0" max="100" value="100"><output id="backlight-output">100%</output></label>
+                <label class="field-line"><span>Gamma</span><select id="panel-gamma"><option value="1.0">1.0</option><option value="1.8">1.8 · Lighter</option><option value="2.2">2.2</option><option value="2.5">2.5</option></select></label>
+                <div class="power-line"><span>预览帧率限制</span><button id="preview-limit-toggle" class="switch-control" role="switch" aria-checked="false"><span></span></button></div>
+                <label class="field-line"><span>限制值</span><input id="preview-limit" type="number" min="1" max="60" value="30"><em>FPS</em></label>
+              </section>
+            </div>
+          </div>
+        </section>
+
+        <section class="view" data-view-panel="firmware" aria-labelledby="view-title">
+          <div class="firmware-layout">
+            <section class="firmware-stage">
+              <div class="section-heading firmware-heading">
+                <div><span class="section-index">01 / DEVICE FIRMWARE</span><h2>ESP32-S3 固件</h2></div>
+                <span id="firmware-status-label" class="state-label">正在扫描</span>
+              </div>
+
+              <div class="firmware-device-row">
+                <div class="chip-mark" aria-hidden="true"><span>S3</span></div>
+                <div class="firmware-device-copy">
+                  <span>自动识别设备</span>
+                  <strong id="firmware-device">正在扫描 USB 串口</strong>
+                  <small id="firmware-device-detail">无需选择端口</small>
+                </div>
+              </div>
+
+              <div class="firmware-progress-block">
+                <div class="firmware-progress-meta"><strong id="firmware-message">准备烧录环境</strong><span id="firmware-progress-value">0%</span></div>
+                <div id="firmware-progress" class="firmware-progress" role="progressbar" aria-label="固件烧录进度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span></span></div>
+                <div class="firmware-phase-line"><span id="firmware-phase">READY</span><small id="firmware-updated">等待设备</small></div>
+              </div>
+
+              <div class="firmware-command-band">
+                <button id="firmware-flash" class="primary-command firmware-flash-command" type="button" disabled>
+                  <span id="firmware-command-icon" class="firmware-command-icon" aria-hidden="true">↓</span><strong id="firmware-flash-label">烧录固件</strong>
+                </button>
+                <p id="firmware-notice">连接 ESP32-S3 后将自动启用烧录。</p>
+              </div>
+            </section>
+
+            <aside class="firmware-side">
+              <section class="settings-band firmware-wifi-panel">
+                <div class="section-heading firmware-wifi-heading">
+                  <div><span class="section-index">02 / USB NETWORK</span><h2>网络设置</h2></div>
+                  <span id="firmware-wifi-state" class="runtime-label">WAITING</span>
+                </div>
+                <form id="firmware-wifi-form" class="firmware-wifi-form" autocomplete="off">
+                  <label><span>Wi-Fi 名称</span><input id="firmware-wifi-ssid" type="text" maxlength="32" autocomplete="off" placeholder="2.4 GHz SSID"></label>
+                  <label><span>网络密码</span><input id="firmware-wifi-password" type="password" maxlength="63" autocomplete="new-password" placeholder="开放网络可留空"></label>
+                  <button id="firmware-wifi-apply" class="primary-command firmware-wifi-command" type="submit" disabled><span aria-hidden="true">↗</span><strong>写入并连接</strong></button>
+                </form>
+                <p id="firmware-wifi-message" class="firmware-wifi-message">连接 USB 后可写入网络，端口无需手动选择。</p>
+              </section>
+
+              <section class="settings-band firmware-gpio-panel">
+                <div class="section-heading firmware-wifi-heading">
+                  <div><span class="section-index">03 / DISPLAY GPIO</span><h2>屏幕引脚</h2></div>
+                  <span id="firmware-gpio-state" class="runtime-label">WAITING</span>
+                </div>
+                <form id="firmware-gpio-form" class="firmware-gpio-form" autocomplete="off">
+                  <div class="firmware-gpio-grid">
+                    <label><span>SCL / SCLK</span><input id="firmware-gpio-scl" data-gpio-key="scl" type="number" min="0" max="48" value="12" inputmode="numeric"></label>
+                    <label><span>SDA / MOSI</span><input id="firmware-gpio-sda" data-gpio-key="sda" type="number" min="0" max="48" value="11" inputmode="numeric"></label>
+                    <label><span>CS</span><input id="firmware-gpio-cs" data-gpio-key="cs" type="number" min="0" max="48" value="10" inputmode="numeric"></label>
+                    <label><span>DC</span><input id="firmware-gpio-dc" data-gpio-key="dc" type="number" min="0" max="48" value="8" inputmode="numeric"></label>
+                    <label><span>RST</span><input id="firmware-gpio-rst" data-gpio-key="rst" type="number" min="0" max="48" value="7" inputmode="numeric"></label>
+                    <label><span>BL</span><input id="firmware-gpio-bl" data-gpio-key="bl" type="number" min="0" max="48" value="6" inputmode="numeric"></label>
+                  </div>
+                  <div class="firmware-gpio-actions">
+                    <button id="firmware-gpio-read" class="secondary-command" type="button" disabled>读取设备</button>
+                    <button id="firmware-gpio-reset" class="secondary-command" type="button">恢复默认</button>
+                    <button id="firmware-gpio-apply" class="primary-command" type="submit" disabled><strong>写入并重启</strong></button>
+                  </div>
+                </form>
+                <p id="firmware-gpio-message" class="firmware-wifi-message">修改后通过 USB 写入 NVS，设备重启后生效。</p>
+              </section>
+
+              <section class="settings-band firmware-build-panel">
+                <span class="section-index">04 / FIRMWARE PACKAGE</span>
+                <dl class="definition-list">
+                  <div><dt>目标</dt><dd id="firmware-target">ESP32-S3</dd></div>
+                  <div><dt>组件</dt><dd id="firmware-project">espagent_display</dd></div>
+                  <div><dt>烧录器</dt><dd id="firmware-idf">检测中</dd></div>
+                  <div><dt>版本</dt><dd id="firmware-build">等待载入</dd></div>
+                </dl>
+              </section>
+
+              <section class="settings-band firmware-log-panel">
+                <div class="section-heading"><div><span class="section-index">05 / FLASH LOG</span><h2>烧录记录</h2></div><span id="firmware-port-count" class="runtime-label">0 DEVICE</span></div>
+                <pre id="firmware-log">等待开始…</pre>
+              </section>
+            </aside>
+          </div>
+        </section>
+
+        <section class="view" data-view-panel="settings" aria-labelledby="view-title">
+          <div class="settings-layout">
+            <section class="settings-band appearance-main">
+              <span class="section-index">01 / DEVICE UI</span>
+              <div class="segmented-control" id="theme-control"><button data-theme="first" aria-pressed="true">First · Paper</button><button data-theme="second" aria-pressed="false" hidden disabled>Second · Editorial</button></div>
+              <div class="segmented-control" id="orientation-control" aria-label="屏幕方向"><button data-orientation="portrait" aria-pressed="true">竖屏 · 240×320</button><button data-orientation="landscape" aria-pressed="false">横屏 · 320×240</button></div>
+              <div class="field-grid">
+                <label><span>中文</span><select id="font-chinese"><option value="auto">Theme Default</option><option value="modern">Modern</option><option value="ui">UI</option><option value="editorial">Editorial</option><option value="humanist">Humanist</option><option value="pixel">Ark Pixel</option></select></label>
+                <label><span>English</span><select id="font-latin"><option value="auto">Theme Default</option><option value="modern">Modern</option><option value="ui">UI</option><option value="editorial">Editorial</option><option value="industrial">Industrial</option><option value="pixel">Ark Pixel</option></select></label>
+                <label><span>数字</span><select id="font-numeric"><option value="auto">Theme Default</option><option value="modern">Modern</option><option value="editorial">Editorial</option><option value="industrial">Industrial</option><option value="mono">Mono</option><option value="pixel">Ark Pixel</option></select></label>
+                <label><span>缩放</span><select id="ui-scale"><option value="90">90%</option><option value="95">95%</option><option value="100">100%</option><option value="105">105%</option><option value="110">110%</option></select></label>
+                <label><span>Hinting</span><select id="font-hinting"><option value="auto">Auto</option><option value="crisp">Crisp</option><option value="smooth">Smooth</option></select></label>
+              </div>
+              <div class="toggle-list">
+                <div class="power-line"><span>灰阶抗锯齿</span><button id="grayscale-toggle" class="switch-control" role="switch" aria-checked="false"><span></span></button></div>
+                <div class="power-line"><span>页面动效</span><button id="motion-toggle" class="switch-control" role="switch" aria-checked="true"><span></span></button></div>
+              </div>
+            </section>
+
+            <aside class="settings-side">
+              <section class="settings-band tone-panel">
+                <div class="section-heading"><div><span class="section-index">02 / TONE</span><h2>输出调校</h2></div><button id="tone-toggle" class="switch-control" role="switch" aria-checked="false"><span></span></button></div>
+                <label class="field-line"><span>预设</span><select id="tone-preset"><option value="off">Off</option><option value="ips-contrast">IPS Contrast</option><option value="high-contrast">High Contrast</option><option value="binary-text">Binary Text</option></select></label>
+                <dl class="definition-list tone-values"><div><dt>对比度</dt><dd id="tone-contrast-value">100%</dd></div><div><dt>亮度</dt><dd id="tone-brightness-value">100%</dd></div><div><dt>色彩</dt><dd id="tone-color-value">100%</dd></div><div><dt>锐度</dt><dd id="tone-sharpness-value">100%</dd></div></dl>
+              </section>
+
+              <section class="settings-band shortcut-panel">
+                <div class="section-heading shortcut-heading">
+                  <div><span class="section-index">03 / SHORTCUTS</span><h2>快捷键</h2></div>
+                  <span id="shortcut-runtime" class="runtime-label">窗口内</span>
+                </div>
+                <div class="shortcut-list">
+                  <div class="shortcut-row">
+                    <strong>屏幕控制</strong>
+                    <div class="shortcut-editor">
+                      <button id="shortcut-toggle-capture" class="shortcut-capture" type="button">录入</button>
+                      <kbd id="shortcut-toggle-preview">Alt + `</kbd>
+                    </div>
+                  </div>
+                  <div class="shortcut-row">
+                    <strong>按住说话</strong>
+                    <div class="shortcut-editor">
+                      <button id="shortcut-voice-capture" class="shortcut-capture" type="button">录入</button>
+                      <kbd id="shortcut-voice-preview">Ctrl + Alt + V</kbd>
+                    </div>
+                  </div>
+                  <div class="shortcut-row">
+                    <strong>页面切换</strong>
+                    <div class="shortcut-editor">
+                      <select id="shortcut-navigation-mode" aria-label="页面切换前缀模式"><option value="none">无前缀</option><option value="custom">自定义</option><option value="disabled">关闭</option></select>
+                      <button id="shortcut-navigation-capture" class="shortcut-capture" type="button" hidden>录入</button>
+                      <kbd id="shortcut-navigation-preview">← / →</kbd>
+                    </div>
+                  </div>
+                  <div class="shortcut-row">
+                    <strong>内容滚动</strong>
+                    <div class="shortcut-editor">
+                      <select id="shortcut-scroll-mode" aria-label="内容滚动前缀模式"><option value="none">无前缀</option><option value="custom" selected>自定义</option><option value="disabled">关闭</option></select>
+                      <button id="shortcut-scroll-capture" class="shortcut-capture" type="button">录入</button>
+                      <kbd id="shortcut-scroll-preview">Alt + ↑ / ↓</kbd>
+                    </div>
+                  </div>
+                  <div class="shortcut-row">
+                    <strong>退出控制</strong>
+                    <div class="shortcut-editor shortcut-exit-editor">
+                      <select id="shortcut-exit-mode" aria-label="退出控制快捷键模式">
+                        <option value="same">同屏幕控制</option>
+                        <option value="custom">自定义</option>
+                        <option value="disabled">关闭</option>
+                      </select>
+                      <button id="shortcut-exit-capture" class="shortcut-capture" type="button" hidden>录入</button>
+                      <kbd id="shortcut-exit-preview">Alt + `</kbd>
+                    </div>
+                  </div>
+                </div>
+                <p class="shortcut-note">点击“录入”后可连续按下多个按键，再次点击“停止”才保存。最多记录 12 个不同按键。</p>
+                <button id="shortcut-reset" class="secondary-command shortcut-reset" type="button">恢复默认</button>
+              </section>
+
+              <section class="settings-band about-panel">
+                <span class="section-index">04 / ABOUT</span>
+                <div class="about-version">
+                  <strong>ESPAgent</strong>
+                  <span id="app-version">--</span>
+                </div>
+                <p>语音诊断日志</p>
+                <code>%LOCALAPPDATA%\ESPAgent\logs\espagent_app.log</code>
+              </section>
+            </aside>
+          </div>
+        </section>
+
+        <section class="view" data-view-panel="diagnostics" aria-labelledby="view-title">
+          <section class="diagnostics-head">
+            <div><span class="section-index">01 / DISPLAY TESTS</span><h2>画面诊断</h2></div>
+            <div class="test-command-grid">
+              <button data-pattern="colorbars">色条</button><button data-pattern="grid">网格</button><button data-pattern="checker">棋盘</button><button data-pattern="palette256">256 色</button><button data-pattern="channels">通道</button><button data-pattern="colors">色域</button><button id="video-test">视频</button>
+            </div>
+          </section>
+
+          <div class="diagnostics-grid">
+            <section class="counter-panel">
+              <div class="section-heading"><div><span class="section-index">02 / PIPELINE</span><h2>实时计数</h2></div><button id="esp-log-toggle" class="secondary-command">ESP 日志：关</button></div>
+              <div class="counter-grid">
+                <div><span>HOST FPS</span><strong id="diag-host-fps">0.0</strong></div><div><span>LCD FPS</span><strong id="diag-lcd-fps">0.0</strong></div><div><span>PREVIEW</span><strong id="diag-preview-fps">0.0</strong></div><div><span>FRAME LAG</span><strong id="diag-lag">0</strong></div>
+                <div><span>DECODE AVG</span><strong id="diag-decode">0.00</strong><small>MS</small></div><div><span>LCD AVG</span><strong id="diag-lcd">0.00</strong><small>MS</small></div><div><span>TOTAL AVG</span><strong id="diag-total">0.00</strong><small>MS</small></div><div><span>QUEUE</span><strong id="diag-queue">0</strong></div>
+              </div>
+              <dl class="definition-list diagnostics-list"><div><dt>接收 / 通过</dt><dd id="diag-rx">0 / 0</dd></div><div><dt>拒绝 / 绘制失败</dt><dd id="diag-errors">0 / 0</dd></div><div><dt>丢帧 / 不完整</dt><dd id="diag-drops">0 / 0</dd></div><div><dt>Worker</dt><dd id="diag-worker">idle</dd></div></dl>
+            </section>
+
+            <section class="state-panel">
+              <div class="section-heading"><div><span class="section-index">03 / STATE</span><h2>状态快照</h2></div><button id="copy-state" class="secondary-command">复制 JSON</button></div>
+              <pre id="raw-state">正在读取状态…</pre>
+            </section>
+          </div>
+        </section>
+      </main>
+
+      <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    </div>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>

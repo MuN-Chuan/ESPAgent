@@ -1,0 +1,19 @@
+menu "ESPAgent Demo Configuration"
+
+config ESPAGENT_WIFI_SSID
+    string "WiFi SSID"
+    default ""
+
+config ESPAGENT_WIFI_PASSWORD
+    string "WiFi Password"
+    default ""
+
+config ESPAGENT_UDP_PORT
+    int "Display UDP port"
+    default 39000
+
+config ESPAGENT_STATUS_PORT
+    int "Display status UDP port"
+    default 39001
+
+endmenu

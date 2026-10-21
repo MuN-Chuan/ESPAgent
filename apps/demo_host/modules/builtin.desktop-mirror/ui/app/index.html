@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="app.css">
+  <title>桌面副屏</title>
+</head>
+<body>
+  <main class="module-page">
+    <header class="module-head">
+      <div><span class="section-index">02 / DESKTOP MIRROR</span><h1>桌面副屏</h1></div>
+      <div class="head-actions"><span id="status" class="status-label">准备中</span><button id="capture-toggle" class="primary" type="button">开始镜像</button></div>
+    </header>
+
+    <section class="mirror-layout">
+      <div class="preview-stage">
+        <div class="stage-head"><span>ESP32 OUTPUT</span><span id="preview-fps">-- FPS</span></div>
+        <div class="preview-canvas"><img id="preview" alt="ESP32 桌面镜像预览"></div>
+        <div class="stage-foot"><span id="backend">CAPTURE --</span><span id="frame-count">FRAME --</span></div>
+      </div>
+
+      <div class="controls">
+        <section class="control-section">
+          <div class="section-heading"><span>01</span><div><h2>捕获来源</h2><p>完整画面等比例缩放，剩余区域使用黑边填充。</p></div></div>
+          <label class="field"><span>显示器</span><select id="monitor"></select></label>
+          <div class="facts"><div><span>布局</span><strong>FIT · 不拉伸</strong></div><div><span>输出</span><strong id="output-size">240 × 320</strong></div></div>
+        </section>
+
+        <section class="control-section">
+          <div class="section-heading"><span>02</span><div><h2>传输与性能</h2><p>默认不限采集帧率，由显示链路按实际处理能力消费最新帧。</p></div></div>
+          <label class="field"><span>采集帧率上限</span><input id="target-fps" type="number" min="0" max="240" step="1" value="0"><em>0 = 不限</em></label>
+          <label class="field"><span>传输模式</span><select id="transport-mode"><option value="mjpeg">MJPEG · 动态画面</option><option value="indexed">Indexed LZ4 · 桌面文字</option></select></label>
+          <div id="mjpeg-settings" class="transport-settings">
+            <label class="field"><span>JPEG 质量</span><input id="jpeg-quality" type="number" min="30" max="95" step="1" value="80"></label>
+            <label class="field"><span>色度采样</span><select id="subsampling"><option value="420">4:2:0 · 节省带宽</option><option value="422">4:2:2</option><option value="444">4:4:4 · 文字清晰</option></select></label>
+          </div>
+          <div id="indexed-settings" class="transport-settings" hidden>
+            <label class="field"><span>索引格式</span><select id="indexed-bpp"><option value="1">I1 · 2 色</option><option value="2">I2 · 4 色</option><option value="4">I4 · 16 色</option><option value="8">I8 · 256 色</option></select></label>
+          </div>
+          <label class="switch-row"><span><strong>捕获光标</strong><small>支持时使用 Windows Graphics Capture</small></span><button id="cursor-toggle" class="switch" type="button" role="switch" aria-checked="false"><i></i></button></label>
+        </section>
+
+        <section class="metric-strip">
+          <div><span>CAPTURE FPS</span><strong id="capture-fps">0.0</strong></div>
+          <div><span>CAPTURED</span><strong id="captured">0</strong></div>
+          <div><span>TRANSPORT</span><strong id="transport-label">MJPEG</strong></div>
+        </section>
+        <p id="error" class="error" hidden></p>
+      </div>
+    </section>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>

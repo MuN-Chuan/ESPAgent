@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "product": "ESPAgent WS2812B Controller",
+  "firmware": "WLED",
+  "version": "16.0.0",
+  "created_at": "2026-05-03T00:00:00Z",
+  "target": "ESP-01S",
+  "chip": "esp8266",
+  "flash": {
+    "baud": 460800,
+    "before": "default_reset",
+    "after": "hard_reset",
+    "arguments": [
+      "--flash_mode",
+      "dout",
+      "--flash_freq",
+      "40m",
+      "--flash_size",
+      "1MB"
+    ]
+  },
+  "images": [
+    {
+      "address": "0x0",
+      "file": "WLED_16.0.0_ESP01.bin",
+      "size": 887376,
+      "sha256": "f6706ca91f27d9fafbce4046f1f57cd1085bceac838439765fae151364c12f18"
+    }
+  ],
+  "source": "https://github.com/wled/WLED/releases/tag/v16.0.0",
+  "license": "EUPL-1.2"
+}

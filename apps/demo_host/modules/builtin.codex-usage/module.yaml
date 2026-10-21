@@ -1,0 +1,33 @@
+id: builtin.codex-usage
+name: Codex 额度
+version: 0.2.0
+description: 显示 Codex 账户额度、重置时间与认证状态
+module_type: builtin
+enabled: true
+
+navigation:
+  order: 10
+  icon: gauge
+  pinned: true
+
+runtime:
+  type: python_module
+  entry: runtime.py:CodexUsageRuntime
+
+frontend:
+  app_pages:
+    - id: usage
+      path: ui/app
+      default: true
+  esp32_scenes:
+    - id: quota
+      path: ui/esp32
+      scene_key: codex
+      width: 240
+      height: 320
+      renderer: host_web
+      default: true
+
+permissions:
+  - process.codex_app_server
+  - codex.account.rate_limits.read

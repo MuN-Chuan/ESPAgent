@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "product": "ESPAgent Display",
+  "firmware": "espagent_display",
+  "version": "2026.07.23.3",
+  "created_at": "2026-07-23T22:16:20+08:00",
+  "target": "ESP32-S3",
+  "chip": "esp32s3",
+  "provisioning": {
+    "wifi": "nvs",
+    "usb": "uart0+usb_serial_jtag",
+    "baud": 115200,
+    "erase_nvs": false,
+    "display_gpio": "nvs"
+  },
+  "flash": {
+    "baud": 460800,
+    "before": "default_reset",
+    "after": "hard_reset",
+    "arguments": [
+      "--flash_mode",
+      "dio",
+      "--flash_freq",
+      "80m",
+      "--flash_size",
+      "2MB"
+    ]
+  },
+  "images": [
+    {
+      "address": "0x0",
+      "file": "bootloader.bin",
+      "size": 21024,
+      "sha256": "690e10464c214576dc9bd853af6694fd7a704d12abc8ae44bf8e029d379efcf0"
+    },
+    {
+      "address": "0x8000",
+      "file": "partition-table.bin",
+      "size": 3072,
+      "sha256": "99074092382b17127989d9b351515b44fa6bb95143be33c97832142638226af7"
+    },
+    {
+      "address": "0x10000",
+      "file": "espagent_display.bin",
+      "size": 949504,
+      "sha256": "0d4d8e2f1e96392ac88281f09c1f1e6c9a73586e56a307508bace5067f99f541"
+    }
+  ]
+}

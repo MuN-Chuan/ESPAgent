@@ -1,0 +1,35 @@
+id: builtin.desktop-mirror
+name: 桌面副屏
+version: 0.2.0
+description: 将电脑显示器等比例串流到 ESP32 屏幕。
+module_type: builtin
+enabled: true
+
+navigation:
+  order: 20
+  icon: monitor
+  pinned: true
+
+runtime:
+  type: python_module
+  entry: runtime.py:DesktopMirrorRuntime
+
+frontend:
+  app_pages:
+    - id: mirror
+      path: ui/app
+      default: true
+  esp32_scenes:
+    - id: desktop
+      path: ui/esp32
+      scene_key: desktop
+      width: 240
+      height: 320
+      renderer: frame_source
+      transport:
+        transport_mode: mjpeg
+      default: true
+
+permissions:
+  - desktop.capture
+  - display.stream

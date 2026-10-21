@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+base_url="${ESPAGENT_API_URL:-http://127.0.0.1:8787}"
+command_name="${1:-state}"
+
+case "$command_name" in
+  state)
+    exec curl.exe --silent --show-error --fail-with-body \
+      "${base_url}/api/light-strip"
+    ;;
+  action)
+    action="${2:-}"
+    payload="${3-}"
+    if [[ -z "$action" || ! "$action" =~ ^[a-z_]+$ ]]; then
+      echo "usage: espagent-light action ACTION '{\"field\":\"value\"}'" >&2
+      exit 2
+    fi
+    if [[ -z "$payload" ]]; then
+      payload='{}'
+    fi
+    body="{\"payload\":${payload}}"
+    exec curl.exe --silent --show-error --fail-with-body \
+      --request POST \
+      --header "Content-Type: application/json" \
+      --data-binary "$body" \
+      "${base_url}/api/light-strip/actions/${action}"
+    ;;
+  *)
+    echo "usage: espagent-light state | action ACTION JSON_PAYLOAD" >&2
+    exit 2
+    ;;
+esac

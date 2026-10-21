@@ -1,0 +1,1479 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>ESPAgent Demo Host</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0b0f14;
+      --panel: #151b22;
+      --line: #2b3642;
+      --text: #e7edf3;
+      --muted: #8ea0b3;
+      --accent: #31d0aa;
+      --warn: #ffcc66;
+      --bad: #ff6b6b;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: "Segoe UI", "Microsoft YaHei", sans-serif;
+    }
+    main {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 20px;
+      display: grid;
+      grid-template-columns: minmax(300px, 360px) 1fr;
+      gap: 16px;
+    }
+    h1 { grid-column: 1 / -1; margin: 0 0 4px; font-size: 22px; letter-spacing: 0; }
+    h2 { margin: 0 0 12px; font-size: 14px; color: var(--muted); font-weight: 600; }
+    section {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      border-radius: 8px;
+      padding: 14px;
+    }
+    .preview-panel { display: grid; justify-items: center; gap: 10px; }
+    #screen-preview {
+      box-sizing: content-box;
+      display: block;
+      width: 240px;
+      height: 320px;
+      image-rendering: pixelated;
+      border: 2px solid #41505f;
+      background: #000;
+    }
+    .stack { display: grid; gap: 12px; }
+    .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    .segmented { display: inline-flex; }
+    .segmented button {
+      min-width: 86px;
+      border-radius: 0;
+      margin-left: -1px;
+    }
+    .segmented button:first-child { margin-left: 0; border-radius: 6px 0 0 6px; }
+    .segmented button:last-child { border-radius: 0 6px 6px 0; }
+    .segmented button[aria-pressed="true"] {
+      position: relative;
+      border-color: var(--accent);
+      background: #12352f;
+      color: var(--accent);
+    }
+    .mode-hidden { display: none; }
+    button {
+      border: 1px solid #41505f;
+      background: #1d2630;
+      color: var(--text);
+      border-radius: 6px;
+      padding: 8px 10px;
+      font: inherit;
+      cursor: pointer;
+    }
+    button:hover { border-color: var(--accent); color: var(--accent); }
+    input[type=text],
+    input[type=number] {
+      flex: 1 1 360px;
+      min-width: 220px;
+      border: 1px solid #41505f;
+      background: #0f151c;
+      color: var(--text);
+      border-radius: 6px;
+      padding: 9px 10px;
+      font: inherit;
+    }
+    input[type=number] {
+      flex: 0 0 82px;
+      min-width: 82px;
+    }
+    input[type=color] {
+      width: 46px;
+      height: 38px;
+      border: 1px solid #41505f;
+      background: #0f151c;
+      border-radius: 6px;
+      padding: 3px;
+      cursor: pointer;
+    }
+    select {
+      border: 1px solid #41505f;
+      background: #0f151c;
+      color: var(--text);
+      border-radius: 6px;
+      padding: 8px 10px;
+      font: inherit;
+    }
+    label {
+      color: var(--muted);
+      font-size: 13px;
+    }
+    #hermes-reply {
+      min-height: 74px;
+      border: 1px solid #334454;
+      border-left: 4px solid var(--accent);
+      background: #0f151c;
+      padding: 10px;
+      white-space: pre-wrap;
+      line-height: 1.45;
+    }
+    #voice-record[aria-pressed="true"] {
+      border-color: var(--bad);
+      background: #3a1d23;
+      color: #ff9b9b;
+    }
+    #voice-input-status {
+      color: var(--muted);
+      font-size: 13px;
+    }
+    #status { min-height: 1.4em; color: var(--bad); }
+    .diagnostics {
+      width: 100%;
+      border: 1px solid #334454;
+      background: #0f151c;
+      border-radius: 6px;
+      padding: 10px;
+      color: #cbd5df;
+      font-size: 12px;
+      line-height: 1.45;
+    }
+    .diagnostics strong { color: var(--text); }
+    .candidate-good { color: var(--accent); }
+    .candidate-bad { color: var(--warn); }
+    .protected-color-panel {
+      width: 100%;
+      display: grid;
+      gap: 8px;
+      padding-top: 2px;
+    }
+    .protected-color-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .protected-color-count {
+      color: var(--muted);
+      font-size: 12px;
+      font-variant-numeric: tabular-nums;
+    }
+    .protected-color-add,
+    .protected-color-remove {
+      width: 38px;
+      height: 38px;
+      padding: 0;
+      font-size: 20px;
+      line-height: 1;
+    }
+    .protected-color-add { margin-left: auto; }
+    button:disabled {
+      cursor: default;
+      opacity: 0.4;
+    }
+    .protected-color-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 6px 12px;
+    }
+    .protected-color-item {
+      min-width: 0;
+      display: grid;
+      grid-template-columns: minmax(56px, 1fr) 46px 38px;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 0;
+      border-bottom: 1px solid #26313c;
+    }
+    .protected-color-item span {
+      overflow: hidden;
+      color: var(--text);
+      font-size: 13px;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    pre {
+      max-height: 360px;
+      margin: 0;
+      background: #090d12;
+      border: 1px solid #26313c;
+      color: #cbd5df;
+      padding: 12px;
+      overflow: auto;
+      border-radius: 6px;
+      font-size: 12px;
+    }
+    @media (max-width: 760px) {
+      main { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>ESPAgent Demo Host</h1>
+
+    <section class="preview-panel">
+      <h2>ESP32 Live Preview</h2>
+      <img id="screen-preview" alt="ESP32 240x320 live preview" src="/api/preview.png">
+      <div id="preview-sync" role="status">Preview -- FPS | ESP32 -- FPS | Frame --</div>
+      <div class="row">
+        <button onclick="refresh()">Refresh</button>
+        <button onclick="scene('test')">Test Scene</button>
+      </div>
+    </section>
+
+    <div class="stack">
+      <section>
+        <h2>Scenes</h2>
+        <div class="row">
+          <button onclick="scene('hermes')">Hermes</button>
+          <button onclick="scene('lights')">Lights</button>
+          <button onclick="scene('link')">Link</button>
+        </div>
+        <div class="row">
+          <label for="display-ui-theme">UI Theme</label>
+          <select id="display-ui-theme" onchange="updateDisplayUi()">
+            <option value="first" selected>First · Paper</option>
+            <option value="second" hidden disabled>Second · Editorial</option>
+          </select>
+          <label for="display-ui-font-chinese">中文</label>
+          <select id="display-ui-font-chinese" onchange="updateDisplayUi()">
+            <option value="auto" data-themes="first,second" selected>Theme Default</option>
+            <option value="modern" data-themes="first,second">Modern · 等线</option>
+            <option value="ui" data-themes="first,second">UI · 微软雅黑</option>
+            <option value="editorial" data-themes="first,second">Editorial · 宋体</option>
+            <option value="humanist" data-themes="first">Humanist · 楷体</option>
+            <option value="pixel" data-themes="first,second">Ark Pixel 10px SC</option>
+          </select>
+          <label for="display-ui-font-latin">English</label>
+          <select id="display-ui-font-latin" onchange="updateDisplayUi()">
+            <option value="auto" data-themes="first,second" selected>Theme Default</option>
+            <option value="modern" data-themes="first,second">Modern · Bahnschrift</option>
+            <option value="ui" data-themes="first,second">UI · Segoe UI</option>
+            <option value="editorial" data-themes="first,second">Editorial · Georgia</option>
+            <option value="industrial" data-themes="first,second">Industrial · Condensed</option>
+            <option value="pixel" data-themes="first,second">Ark Pixel</option>
+          </select>
+          <label for="display-ui-font-numeric">数字</label>
+          <select id="display-ui-font-numeric" onchange="updateDisplayUi()">
+            <option value="auto" data-themes="first,second" selected>Theme Default</option>
+            <option value="modern" data-themes="first,second">Modern · Bahnschrift</option>
+            <option value="editorial" data-themes="first,second">Editorial · Georgia</option>
+            <option value="industrial" data-themes="first,second">Industrial · Condensed</option>
+            <option value="mono" data-themes="first,second">Mono · Consolas</option>
+            <option value="pixel" data-themes="first,second">Ark Pixel</option>
+          </select>
+          <label for="display-ui-scale">Scale</label>
+          <select id="display-ui-scale" onchange="updateDisplayUi()">
+            <option value="90">90%</option>
+            <option value="95">95%</option>
+            <option value="100" selected>100%</option>
+            <option value="105">105%</option>
+            <option value="110">110%</option>
+          </select>
+          <label for="display-ui-hinting">Hinting</label>
+          <select id="display-ui-hinting" onchange="updateDisplayUi()">
+            <option value="auto" selected>Auto</option>
+            <option value="crisp">Crisp</option>
+            <option value="smooth">Smooth</option>
+          </select>
+          <button id="ui-motion-toggle" onclick="toggleDisplayUiMotion()">Motion: On</button>
+          <a href="/screen/" target="_blank" rel="noreferrer">Open UI</a>
+        </div>
+        <div class="row">
+          <label>Text edges</label>
+          <div class="segmented" role="group" aria-label="Text edge rendering">
+            <button id="ui-edge-binary" type="button" aria-pressed="true" onclick="setDisplayUiGrayscaleAa(false)">Binary</button>
+            <button id="ui-edge-grayscale" type="button" aria-pressed="false" onclick="setDisplayUiGrayscaleAa(true)">Gray AA</button>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2>Display Test Images</h2>
+        <div class="row">
+          <button onclick="testPattern('colorbars')">Color Bars</button>
+          <button onclick="testPattern('palette256')">256 Colors</button>
+          <button onclick="testPattern('channels')">Channel Ramps</button>
+          <button onclick="testPattern('colors')">Color Gamut</button>
+          <button onclick="testPattern('grid')">Grid</button>
+          <button onclick="testPattern('checker')">Checker</button>
+          <button onclick="updateDuotonePattern()">Text Sizes</button>
+          <button onclick="startVideoTest()">Video Fast</button>
+        </div>
+        <div class="row">
+          <label for="duotone-preset">Palette</label>
+          <select id="duotone-preset" onchange="applyDuotonePreset()">
+            <option value="paper" selected>Paper</option>
+            <option value="white-black">White / Black</option>
+            <option value="ink">Ink</option>
+            <option value="editorial">Editorial</option>
+            <option value="solarized">Solarized</option>
+            <option value="museum-blue">Museum Blue</option>
+            <option value="terminal-green">Terminal Green</option>
+            <option value="oled-amber">OLED Amber</option>
+          </select>
+          <label for="duotone-bg">BG</label>
+          <input id="duotone-bg" type="color" value="#ffffff" onchange="updateDuotonePattern()">
+          <label for="duotone-fg">Text</label>
+          <input id="duotone-fg" type="color" value="#111111" onchange="updateDuotonePattern()">
+        </div>
+        <div class="row">
+          <input id="duotone-text" type="text" value="Aa 汉字 123 字号排版">
+          <button onclick="updateDuotonePattern()">Apply</button>
+        </div>
+        <div class="row" data-mode-option="udp">
+          <button id="unified-flush-toggle" onclick="toggleUnifiedFlush()">Unified Flush: On</button>
+        </div>
+        <div class="row">
+          <label for="transport-mode">Transport</label>
+          <select id="transport-mode" onchange="updateTransportOptions()">
+            <option value="udp">UDP</option>
+            <option value="webrtc">WebRTC</option>
+            <option value="mjpeg">MJPEG</option>
+            <option value="indexed" selected>Indexed LZ4</option>
+          </select>
+        </div>
+        <div id="transport-sync" class="diagnostics">ESP transport status pending</div>
+        <div class="row" data-mode-option="webrtc">
+          <button onclick="launchWebRTCChrome()">Open WebRTC Chrome</button>
+          <button onclick="resetWebRTCSignaling()">Reset WebRTC</button>
+          <button id="webrtc-connect" onclick="connectWebRTC()">Connect WebRTC</button>
+          <button id="webrtc-send-toggle" onclick="toggleWebRTCSend()">Send: Off</button>
+        </div>
+        <div id="ice-diagnostics" class="diagnostics" data-mode-option="webrtc">ICE diagnostics waiting for WebRTC offer</div>
+        <div class="row" data-mode-option="udp">
+          <label for="compression-mode">Compression</label>
+          <select id="compression-mode" onchange="updateTransportOptions()">
+            <option value="auto">Auto</option>
+            <option value="raw">Raw</option>
+            <option value="rle">RLE</option>
+            <option value="lz4">LZ4</option>
+          </select>
+        </div>
+        <div class="row" data-mode-option="udp,mjpeg">
+          <button id="nack-toggle" onclick="toggleNack()">NACK: Off</button>
+        </div>
+        <div class="row">
+          <button id="esp-log-toggle" onclick="toggleEspLog()">ESP Log: Off</button>
+        </div>
+        <div class="row">
+          <label for="backlight-percent">Backlight</label>
+          <input id="backlight-range" type="range" min="0" max="100" step="1" value="100" oninput="syncBacklightInput(this.value)" onchange="updateTransportOptions()">
+          <input id="backlight-percent" type="number" min="0" max="100" step="1" value="100" onfocus="beginNumberEdit(this)" onblur="commitNumberEdit(this)" onkeydown="handleNumberKey(event)">
+          <label for="panel-gamma">Panel Gamma</label>
+          <select id="panel-gamma" onchange="updateTransportOptions()">
+            <option value="2.5">2.5 / Deeper</option>
+            <option value="2.2">2.2 / Standard</option>
+            <option value="1.8" selected>1.8 / Lighter</option>
+            <option value="1.0">1.0 / Linear</option>
+          </select>
+        </div>
+        <div class="row">
+          <button id="display-tone-toggle" onclick="toggleDisplayTone()">Tone: Off</button>
+          <label for="display-tone-preset">Tone Preset</label>
+          <select id="display-tone-preset" onchange="applyDisplayTonePreset()">
+            <option value="ips-contrast">IPS Contrast</option>
+            <option value="high-contrast">High Contrast</option>
+            <option value="binary-text">Binary Text</option>
+            <option value="off" selected>Off</option>
+          </select>
+        </div>
+        <div class="row">
+          <label for="tone-contrast">Contrast</label>
+          <input id="tone-contrast" type="number" min="50" max="220" step="1" value="100" onfocus="beginNumberEdit(this)" onblur="commitNumberEdit(this)" onkeydown="handleNumberKey(event)">
+          <label for="tone-brightness">Bright</label>
+          <input id="tone-brightness" type="number" min="50" max="160" step="1" value="100" onfocus="beginNumberEdit(this)" onblur="commitNumberEdit(this)" onkeydown="handleNumberKey(event)">
+          <label for="tone-color">Color</label>
+          <input id="tone-color" type="number" min="0" max="200" step="1" value="100" onfocus="beginNumberEdit(this)" onblur="commitNumberEdit(this)" onkeydown="handleNumberKey(event)">
+          <label for="tone-sharpness">Sharp</label>
+          <input id="tone-sharpness" type="number" min="0" max="250" step="1" value="100" onfocus="beginNumberEdit(this)" onblur="commitNumberEdit(this)" onkeydown="handleNumberKey(event)">
+          <label for="tone-binary">Binary</label>
+          <input id="tone-binary" type="number" min="0" max="254" step="1" value="0" onfocus="beginNumberEdit(this)" onblur="commitNumberEdit(this)" onkeydown="handleNumberKey(event)">
+        </div>
+        <div class="row" data-mode-option="mjpeg">
+          <label for="mjpeg-quality">JPEG Q</label>
+          <input id="mjpeg-quality" type="number" min="10" max="95" step="1" value="90" onfocus="beginNumberEdit(this)" onblur="commitNumberEdit(this)" onkeydown="handleNumberKey(event)">
+          <label for="mjpeg-subsampling">Chroma</label>
+          <select id="mjpeg-subsampling" onchange="updateTransportOptions()">
+            <option value="420" selected>4:2:0</option>
+            <option value="422">4:2:2</option>
+            <option value="444">4:4:4</option>
+          </select>
+        </div>
+        <div class="row" data-mode-option="indexed">
+          <label for="indexed-bpp">Palette</label>
+          <select id="indexed-bpp" onchange="handleIndexedBppChange()">
+            <option value="1">1 bpp / 2 colors</option>
+            <option value="2" selected>2 bpp / 4 colors</option>
+            <option value="4">I4 / 16 colors</option>
+            <option value="8">I8 / 256 colors</option>
+          </select>
+        </div>
+        <div class="row" data-mode-option="indexed">
+          <div class="protected-color-panel">
+            <div class="protected-color-header">
+              <label>Protected Colors</label>
+              <span id="indexed-protected-color-count" class="protected-color-count">0 / 4</span>
+              <button id="indexed-protected-color-add" class="protected-color-add" type="button" title="Add protected color" aria-label="Add protected color" onclick="addIndexedProtectedColor()">+</button>
+            </div>
+            <div id="indexed-protected-color-list" class="protected-color-list"></div>
+          </div>
+        </div>
+        <div class="row">
+          <button id="preview-fps-toggle" onclick="togglePreviewFpsLimit()">Preview Limit: On</button>
+          <label for="preview-fps-limit">Preview FPS</label>
+          <input id="preview-fps-limit" type="number" min="1" max="60" step="1" value="1" onfocus="beginNumberEdit(this)" onblur="commitNumberEdit(this)" onkeydown="handleNumberKey(event)">
+        </div>
+        <div id="display-perf" class="diagnostics" data-mode-option="mjpeg">ESP performance counters waiting for a 5-second sample</div>
+        <div class="row" data-mode-option="udp">
+          <button id="nack-frame-end-toggle" onclick="toggleNackFrameEnd()">NACK Frame End: On</button>
+        </div>
+        <div class="row" data-mode-option="udp">
+          <label for="tile-width">Tile W</label>
+          <input id="tile-width" type="number" min="1" max="240" step="1" value="120" onfocus="beginNumberEdit(this)" onblur="commitNumberEdit(this)" onkeydown="handleNumberKey(event)">
+          <label for="tile-height">Tile H</label>
+          <input id="tile-height" type="number" min="1" max="320" step="1" value="6" onfocus="beginNumberEdit(this)" onblur="commitNumberEdit(this)" onkeydown="handleNumberKey(event)">
+        </div>
+      </section>
+
+      <section>
+        <h2>Hermes</h2>
+        <div class="row">
+          <input id="prompt" type="text" value="打开客厅主灯并设置亮度为 40%">
+          <button onclick="askHermes()">Send</button>
+          <button onclick="interruptHermes()">打断</button>
+          <button onclick="newHermesSession()">新会话</button>
+          <span id="hermes-audio-status">语音：等待状态</span>
+        </div>
+        <div class="row">
+          <button id="voice-enabled-toggle" onclick="toggleVoiceEnabled()">麦克风：检测中</button>
+          <button id="voice-record" aria-pressed="false" onclick="toggleVoiceRecording()">开始说话</button>
+          <label for="voice-silence-seconds">静音结束</label>
+          <input id="voice-silence-seconds" type="number" min="0.5" max="10" step="0.5" value="2" onchange="updateVoiceSilenceDuration()">
+          <span>秒</span>
+          <span id="voice-input-status" role="status">正在检测 Hermes 语音输入能力…</span>
+        </div>
+        <div id="hermes-reply">等待 Hermes 回复</div>
+      </section>
+
+      <section>
+        <h2>Light</h2>
+        <div class="row">
+          <button onclick="light(true, 40)">On 40%</button>
+          <button onclick="light(true, 80)">On 80%</button>
+          <button onclick="light(false)">Off</button>
+        </div>
+      </section>
+
+      <section>
+        <h2>State</h2>
+        <div id="status" role="status"></div>
+        <pre id="state"></pre>
+      </section>
+    </div>
+  </main>
+  <script>
+    const editingNumberInputs = new Set();
+    let lastVoiceTranscript = '';
+    const duotonePresets = {
+      paper: { background: '#F8FAFC', text: '#111827' },
+      'white-black': { background: '#FFFFFF', text: '#000000' },
+      ink: { background: '#0B0F14', text: '#E7EDF3' },
+      editorial: { background: '#F5EBDD', text: '#2A1E17' },
+      solarized: { background: '#FDF6E3', text: '#073642' },
+      'museum-blue': { background: '#EFF6FF', text: '#1D4ED8' },
+      'terminal-green': { background: '#001B10', text: '#A7F3D0' },
+      'oled-amber': { background: '#050505', text: '#FBBF24' }
+    };
+    const displayTonePresets = {
+      off: { enabled: false, contrast: 100, brightness: 100, color: 100, sharpness: 100, binary: 0 },
+      'ips-contrast': { enabled: true, contrast: 135, brightness: 105, color: 110, sharpness: 125, binary: 0 },
+      'high-contrast': { enabled: true, contrast: 165, brightness: 108, color: 125, sharpness: 150, binary: 0 },
+      'binary-text': { enabled: true, contrast: 100, brightness: 100, color: 0, sharpness: 100, binary: 128 }
+    };
+    let previewInFlight = false;
+    let previewTimer = null;
+    let previewAnimationFrame = null;
+    let previewObjectUrl = null;
+    let previewLastFrameId = null;
+    let previewIntervalMs = 1000;
+    let stateRefreshTimer = null;
+    let stateRefreshIntervalMs = 1000;
+    let rawStateRenderedAt = 0;
+    let indexedProtectedColors = [null, null, null, null];
+
+    async function request(path, options) {
+      const status = document.getElementById('status');
+      status.textContent = '';
+      const response = await fetch(path, options);
+      if (!response.ok) {
+        const message = await response.text();
+        throw new Error(message || response.statusText);
+      }
+      return response;
+    }
+
+    async function run(action) {
+      try {
+        await action();
+      } catch (error) {
+        document.getElementById('status').textContent = error.message;
+      }
+    }
+
+    function isLargeForegroundWindow() {
+      const nearScreenWidth = window.outerWidth >= screen.availWidth - 24;
+      const nearScreenHeight = window.outerHeight >= screen.availHeight - 80;
+      return Boolean(document.fullscreenElement) || (nearScreenWidth && nearScreenHeight) || window.innerWidth >= 1500;
+    }
+
+    function schedulePreviewFrame(delayMs) {
+      if (previewTimer) {
+        clearTimeout(previewTimer);
+        previewTimer = null;
+      }
+      if (previewAnimationFrame) {
+        cancelAnimationFrame(previewAnimationFrame);
+        previewAnimationFrame = null;
+      }
+      if (delayMs <= 0) {
+        previewAnimationFrame = requestAnimationFrame(() => {
+          previewAnimationFrame = null;
+          refreshPreviewFrame();
+        });
+        return;
+      }
+      previewTimer = setTimeout(refreshPreviewFrame, delayMs);
+    }
+
+    async function refreshPreviewFrame() {
+      if (previewInFlight) {
+        schedulePreviewFrame(previewIntervalMs);
+        return;
+      }
+      const frameStartedAt = performance.now();
+      previewInFlight = true;
+      try {
+        const preview = document.getElementById('screen-preview');
+        const mode = document.getElementById('transport-mode').value;
+        const path = mode === 'mjpeg' ? '/api/display/preview.jpg' : '/api/preview.png';
+        const response = await fetch(path + '?t=' + Date.now(), { cache: 'no-store' });
+        if (!response.ok) {
+          throw new Error(await response.text() || response.statusText);
+        }
+        const frameId = response.headers.get('X-Frame-Id');
+        if (frameId && frameId === previewLastFrameId) {
+          return;
+        }
+        const nextUrl = URL.createObjectURL(await response.blob());
+        const previousUrl = previewObjectUrl;
+        previewObjectUrl = nextUrl;
+        preview.onload = () => {
+          if (previousUrl) {
+            URL.revokeObjectURL(previousUrl);
+          }
+        };
+        preview.src = nextUrl;
+        previewLastFrameId = frameId;
+      } catch (error) {
+        document.getElementById('status').textContent = error.message;
+      } finally {
+        previewInFlight = false;
+        const elapsedMs = performance.now() - frameStartedAt;
+        schedulePreviewFrame(Math.max(0, previewIntervalMs - elapsedMs));
+      }
+    }
+
+    function updatePreviewTiming(state) {
+      const configuredFps = Number(state.link.preview_fps_limit || 1);
+      const displayFps = Number(state.link.display_fps || 0);
+      const hostFps = Number(state.link.fps || 0);
+      const sourceFps = Math.max(1, Math.min(60, displayFps || hostFps || 30));
+      const targetFps = state.link.preview_fps_limited
+        ? Math.max(1, Math.min(configuredFps, sourceFps))
+        : sourceFps;
+      previewIntervalMs = Math.round(1000 / targetFps);
+    }
+
+    function renderState(state) {
+      const degraded = isLargeForegroundWindow();
+      const now = performance.now();
+      if (!degraded || now - rawStateRenderedAt > 5000) {
+        document.getElementById('state').textContent = JSON.stringify(state, null, 2);
+        rawStateRenderedAt = now;
+      }
+      document.getElementById('hermes-reply').textContent = state.hermes.last_reply || state.hermes.interim_message || '等待 Hermes 回复';
+      document.getElementById('hermes-audio-status').textContent = `语音：${state.hermes.audio_status || 'disabled'} · 队列 ${Number(state.hermes.audio_queue_depth || 0)}`;
+      const voiceStatus = state.hermes.voice_status || 'disabled';
+      const voiceEnabled = Boolean(state.hermes.voice_enabled);
+      const voiceAvailable = Boolean(state.hermes.voice_available);
+      const voiceToggle = document.getElementById('voice-enabled-toggle');
+      const voiceRecord = document.getElementById('voice-record');
+      const voiceStatusLabel = document.getElementById('voice-input-status');
+      voiceToggle.textContent = `麦克风：${voiceEnabled ? '已启用' : '未启用'}`;
+      const isListening = voiceStatus === 'listening';
+      voiceRecord.textContent = isListening ? '停止并识别' : '开始说话';
+      voiceRecord.setAttribute('aria-pressed', String(isListening));
+      voiceRecord.disabled = !voiceAvailable || ['transcribing', 'submitting'].includes(voiceStatus);
+      const voiceLabels = {
+        disabled: '语音输入未启用', ready: '可以开始说话', listening: '正在聆听，停止说话后会自动识别',
+        transcribing: '正在识别语音…', recognized: '已识别，准备提交', submitting: '已提交给 Hermes',
+        no_speech: '没有识别到语音，请重试', unavailable: '当前麦克风或语音识别不可用', failed: '语音输入发生错误'
+      };
+      voiceStatusLabel.textContent = state.hermes.voice_error || voiceLabels[voiceStatus] || voiceStatus;
+      voiceStatusLabel.title = state.hermes.voice_details || '';
+      const transcript = state.hermes.voice_transcript || '';
+      if (transcript && transcript !== lastVoiceTranscript) {
+        lastVoiceTranscript = transcript;
+        const promptInput = document.getElementById('prompt');
+        if (document.activeElement !== promptInput) promptInput.value = transcript;
+      }
+      const silenceInput = document.getElementById('voice-silence-seconds');
+      if (document.activeElement !== silenceInput) {
+        silenceInput.value = String(Number(state.hermes.voice_silence_seconds || 2));
+      }
+      document.getElementById('transport-mode').value = state.link.transport_mode || 'indexed';
+      const requestedTransport = state.link.transport_mode || 'indexed';
+      const activeTransport = state.link.esp_transport_mode || 'unknown';
+      const transportSynced = activeTransport === requestedTransport &&
+        Number(state.link.esp_transport_epoch || 0) === Number(state.link.transport_epoch || 0);
+      document.getElementById('transport-sync').textContent =
+        'ESP ' + activeTransport.toUpperCase() + ' · epoch ' + Number(state.link.esp_transport_epoch || 0) +
+        (transportSynced ? ' · synced' : ' · switching');
+      document.getElementById('unified-flush-toggle').textContent = 'Unified Flush: ' + (state.link.unified_flush ? 'On' : 'Off');
+      document.getElementById('compression-mode').value = state.link.compression_mode || 'auto';
+      document.getElementById('nack-toggle').textContent = 'NACK: ' + (state.link.nack_enabled ? 'On' : 'Off');
+      document.getElementById('nack-frame-end-toggle').textContent = 'NACK Frame End: ' + (state.link.resend_frame_end_on_nack ? 'On' : 'Off');
+      document.getElementById('esp-log-toggle').textContent = 'ESP Log: ' + (state.link.esp_log_enabled ? 'On' : 'Off');
+      document.getElementById('mjpeg-subsampling').value = state.link.mjpeg_subsampling || '420';
+      const indexedBpp = Number(state.link.indexed_bpp || 2);
+      document.getElementById('indexed-bpp').value = String(indexedBpp);
+      renderIndexedProtectedColors(state.link.indexed_protected_colors, indexedBpp);
+      document.getElementById('preview-fps-toggle').textContent = 'Preview Limit: ' + (state.link.preview_fps_limited ? 'On' : 'Off');
+      if (state.duotone) {
+        document.getElementById('duotone-preset').value = state.duotone.preset || 'paper';
+        document.getElementById('duotone-bg').value = (state.duotone.background || '#FFFFFF').toLowerCase();
+        document.getElementById('duotone-fg').value = (state.duotone.text_color || '#111111').toLowerCase();
+        const textInput = document.getElementById('duotone-text');
+        if (document.activeElement !== textInput) {
+          textInput.value = state.duotone.text || 'Aa 汉字 123 字号排版';
+        }
+      }
+      if (state.display_tone) {
+        const toneBypassed = state.active_scene === 'test' && ['palette256', 'channels', 'colors'].includes(state.test_pattern);
+        const toneToggle = document.getElementById('display-tone-toggle');
+        toneToggle.textContent = toneBypassed ? 'Tone: Bypassed' : 'Tone: ' + (state.display_tone.enabled ? 'On' : 'Off');
+        document.getElementById('display-tone-preset').value = state.display_tone.preset || 'off';
+        setNumberInputValue('tone-contrast', state.display_tone.contrast_percent || 100);
+        setNumberInputValue('tone-brightness', state.display_tone.brightness_percent || 100);
+        setNumberInputValue('tone-color', state.display_tone.color_percent ?? 100);
+        setNumberInputValue('tone-sharpness', state.display_tone.sharpness_percent || 100);
+        setNumberInputValue('tone-binary', state.display_tone.binary_threshold || 0);
+        [
+          toneToggle,
+          document.getElementById('display-tone-preset'),
+          document.getElementById('tone-contrast'),
+          document.getElementById('tone-brightness'),
+          document.getElementById('tone-color'),
+          document.getElementById('tone-sharpness'),
+          document.getElementById('tone-binary')
+        ].forEach((control) => { control.disabled = toneBypassed; });
+      }
+      if (state.display_ui) {
+        const theme = state.display_ui.theme || 'first';
+        document.getElementById('display-ui-theme').value = theme;
+        syncDisplayFontOptions(theme, 'chinese', state.display_ui.font_chinese || 'auto');
+        syncDisplayFontOptions(theme, 'latin', state.display_ui.font_latin || 'auto');
+        syncDisplayFontOptions(theme, 'numeric', state.display_ui.font_numeric || 'auto');
+        document.getElementById('display-ui-scale').value = String(state.display_ui.scale_percent || 100);
+        document.getElementById('display-ui-hinting').value = state.display_ui.font_hinting || 'auto';
+        const grayscaleAa = state.display_ui.grayscale_antialiasing === true;
+        document.getElementById('ui-edge-binary').setAttribute('aria-pressed', String(!grayscaleAa));
+        document.getElementById('ui-edge-grayscale').setAttribute('aria-pressed', String(grayscaleAa));
+        document.getElementById('ui-motion-toggle').textContent = 'Motion: ' + (state.display_ui.motion_enabled ? 'On' : 'Off');
+      }
+      setBacklightValue(state.link.backlight_percent ?? 100);
+      document.getElementById('panel-gamma').value = state.link.panel_gamma || '1.8';
+      setNumberInputValue('tile-width', state.link.tile_width || 120);
+      setNumberInputValue('tile-height', state.link.tile_height || 6);
+      setNumberInputValue('mjpeg-quality', state.link.mjpeg_quality || 90);
+      setNumberInputValue('preview-fps-limit', state.link.preview_fps_limit || 1);
+      const previewFps = Number(state.link.preview_fps || 0).toFixed(1);
+      const displayFps = Number(state.link.display_fps || 0).toFixed(1);
+      const displayedFrame = state.link.displayed_frame_id || '--';
+      document.getElementById('preview-sync').textContent =
+        'Preview ' + previewFps + ' FPS | ESP32 ' + displayFps + ' FPS | Frame ' + displayedFrame;
+      const toMs = value => (Number(value || 0) / 1000).toFixed(2);
+      const indexedTransport = state.link.transport_mode === 'indexed';
+      const queueStats = indexedTransport
+        ? 'Queue ' + Number(state.link.indexed_queue_depth || 0) +
+          ' / Queued ' + Number(state.link.indexed_queued_frames || 0) +
+          ' / Incomplete ' + Number(state.link.indexed_incomplete_frames || 0) +
+          ' / Dropped ' + Number(state.link.indexed_dropped_frames || 0) +
+          ' / No buffer ' + Number(state.link.indexed_no_buffer_frames || 0)
+        : 'Queued ' + Number(state.link.jpeg_queued_frames || 0) +
+          ' / Incomplete ' + Number(state.link.jpeg_incomplete_frames || 0) +
+          ' / Dropped ' + Number(state.link.jpeg_dropped_frames || 0);
+      document.getElementById('display-perf').textContent = state.link.perf_frames > 0
+        ? 'ESP ' + (Number(state.link.perf_window_ms || 0) / 1000).toFixed(2) + 's / ' + state.link.perf_frames +
+          ' frames | Decode ' + toMs(state.link.decode_avg_us) + '/' + toMs(state.link.decode_max_us) +
+          ' ms | LCD ' + toMs(state.link.lcd_avg_us) + '/' + toMs(state.link.lcd_max_us) +
+          ' ms | Total ' + toMs(state.link.frame_avg_us) + '/' + toMs(state.link.frame_max_us) +
+          ' ms | ' + queueStats + ' (avg/max)'
+        : 'ESP performance counters waiting for a 5-second sample';
+      updateTransportOptionVisibility(state.link.transport_mode || 'indexed');
+      updatePreviewTiming(state);
+      stateRefreshIntervalMs = degraded ? 2000 : 1000;
+    }
+
+    function setNumberInputValue(id, value) {
+      const input = document.getElementById(id);
+      if (!editingNumberInputs.has(id) && document.activeElement !== input) {
+        input.value = value;
+      }
+    }
+
+    function setBacklightValue(value) {
+      document.getElementById('backlight-range').value = value;
+      setNumberInputValue('backlight-percent', value);
+    }
+
+    function syncBacklightInput(value) {
+      const input = document.getElementById('backlight-percent');
+      if (!editingNumberInputs.has(input.id) && document.activeElement !== input) {
+        input.value = value;
+      }
+    }
+
+    function beginNumberEdit(input) {
+      editingNumberInputs.add(input.id);
+    }
+
+    async function commitNumberEdit(input) {
+      if (!editingNumberInputs.has(input.id)) {
+        return;
+      }
+      editingNumberInputs.delete(input.id);
+      if (input.id.startsWith('tone-')) {
+        await updateDisplayTone();
+        return;
+      }
+      await updateTransportOptions();
+    }
+
+    function handleNumberKey(event) {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        event.currentTarget.blur();
+      }
+      if (event.key === 'Escape') {
+        editingNumberInputs.delete(event.currentTarget.id);
+        event.currentTarget.blur();
+        refresh();
+      }
+    }
+
+    function updateTransportOptionVisibility(mode) {
+      document.querySelectorAll('[data-mode-option]').forEach((element) => {
+        const modes = element.dataset.modeOption.split(',').map((item) => item.trim());
+        element.classList.toggle('mode-hidden', !modes.includes(mode));
+      });
+    }
+
+    function indexedPaletteCapacity(bpp) {
+      return 2 ** Number(bpp);
+    }
+
+    function resizeIndexedProtectedColors(colors, bpp) {
+      const capacity = indexedPaletteCapacity(bpp);
+      return Array.from({ length: capacity }, (_item, index) => (
+        Array.isArray(colors) && typeof colors[index] === 'string' ? colors[index] : null
+      ));
+    }
+
+    function hslToHex(hue, saturation, lightness) {
+      const chroma = (1 - Math.abs(2 * lightness - 1)) * saturation;
+      const segment = hue / 60;
+      const secondary = chroma * (1 - Math.abs((segment % 2) - 1));
+      const channels = segment < 1 ? [chroma, secondary, 0]
+        : segment < 2 ? [secondary, chroma, 0]
+          : segment < 3 ? [0, chroma, secondary]
+            : segment < 4 ? [0, secondary, chroma]
+              : segment < 5 ? [secondary, 0, chroma]
+                : [chroma, 0, secondary];
+      const offset = lightness - chroma / 2;
+      return '#' + channels
+        .map((channel) => Math.round((channel + offset) * 255).toString(16).padStart(2, '0'))
+        .join('');
+    }
+
+    function defaultIndexedProtectedColor(slot) {
+      if (slot === 0) return '#000000';
+      if (slot === 1) return '#ffffff';
+      return hslToHex(((slot - 2) * 137.508) % 360, 0.68, 0.52);
+    }
+
+    function renderIndexedProtectedColors(colors, bpp) {
+      const list = document.getElementById('indexed-protected-color-list');
+      if (
+        list.contains(document.activeElement) &&
+        document.activeElement instanceof HTMLInputElement &&
+        document.activeElement.type === 'color'
+      ) {
+        return;
+      }
+      indexedProtectedColors = resizeIndexedProtectedColors(colors, bpp);
+      list.replaceChildren();
+      indexedProtectedColors.forEach((color, index) => {
+        if (typeof color !== 'string') return;
+        const item = document.createElement('div');
+        item.className = 'protected-color-item';
+
+        const name = document.createElement('span');
+        name.textContent = `Color ${index + 1}`;
+
+        const picker = document.createElement('input');
+        picker.type = 'color';
+        picker.value = color.toLowerCase();
+        picker.setAttribute('aria-label', `Color ${index + 1}`);
+        picker.addEventListener('change', () => setIndexedProtectedColor(index, picker.value));
+
+        const remove = document.createElement('button');
+        remove.type = 'button';
+        remove.className = 'protected-color-remove';
+        remove.textContent = '×';
+        remove.title = `Remove Color ${index + 1}`;
+        remove.setAttribute('aria-label', `Remove Color ${index + 1}`);
+        remove.addEventListener('click', () => removeIndexedProtectedColor(index));
+
+        item.append(name, picker, remove);
+        list.append(item);
+      });
+      const enabledCount = indexedProtectedColors.filter((color) => typeof color === 'string').length;
+      document.getElementById('indexed-protected-color-count').textContent = `${enabledCount} / ${indexedProtectedColors.length}`;
+      document.getElementById('indexed-protected-color-add').disabled = enabledCount >= indexedProtectedColors.length;
+    }
+
+    async function handleIndexedBppChange() {
+      const bpp = Number(document.getElementById('indexed-bpp').value);
+      indexedProtectedColors = resizeIndexedProtectedColors(indexedProtectedColors, bpp);
+      renderIndexedProtectedColors(indexedProtectedColors, bpp);
+      await updateTransportOptions();
+    }
+
+    async function addIndexedProtectedColor() {
+      const slot = indexedProtectedColors.findIndex((color) => color === null);
+      if (slot < 0) return;
+      indexedProtectedColors[slot] = defaultIndexedProtectedColor(slot);
+      renderIndexedProtectedColors(indexedProtectedColors, Number(document.getElementById('indexed-bpp').value));
+      await updateTransportOptions();
+    }
+
+    async function setIndexedProtectedColor(slot, color) {
+      indexedProtectedColors[slot] = color;
+      await updateTransportOptions();
+    }
+
+    async function removeIndexedProtectedColor(slot) {
+      indexedProtectedColors[slot] = null;
+      renderIndexedProtectedColors(indexedProtectedColors, Number(document.getElementById('indexed-bpp').value));
+      await updateTransportOptions();
+    }
+
+    async function scene(name) {
+      await run(async () => {
+        await request('/api/scene/' + name, { method: 'POST' });
+        await refresh();
+      });
+    }
+
+    async function testPattern(name) {
+      await run(async () => {
+        await request('/api/test-pattern/' + name, { method: 'POST' });
+        await refresh();
+      });
+    }
+
+    async function updateDisplayUi(options = {}) {
+      await run(async () => {
+        const theme = options.theme || document.getElementById('display-ui-theme').value;
+        const fontChinese = syncDisplayFontOptions(theme, 'chinese', options.font_chinese || document.getElementById('display-ui-font-chinese').value);
+        const fontLatin = syncDisplayFontOptions(theme, 'latin', options.font_latin || document.getElementById('display-ui-font-latin').value);
+        const fontNumeric = syncDisplayFontOptions(theme, 'numeric', options.font_numeric || document.getElementById('display-ui-font-numeric').value);
+        const scalePercent = Number(options.scale_percent || document.getElementById('display-ui-scale').value);
+        const fontHinting = options.font_hinting || document.getElementById('display-ui-hinting').value;
+        await request('/api/display/ui', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            theme,
+            font_chinese: fontChinese,
+            font_latin: fontLatin,
+            font_numeric: fontNumeric,
+            scale_percent: scalePercent,
+            font_hinting: fontHinting,
+            ...(Object.prototype.hasOwnProperty.call(options, 'grayscale_antialiasing') ? { grayscale_antialiasing: options.grayscale_antialiasing } : {}),
+            ...(Object.prototype.hasOwnProperty.call(options, 'motion_enabled') ? { motion_enabled: options.motion_enabled } : {})
+          })
+        });
+        await refresh();
+      });
+    }
+
+    function syncDisplayFontOptions(theme, role, requestedFont) {
+      const select = document.getElementById('display-ui-font-' + role);
+      Array.from(select.options).forEach((option) => {
+        option.disabled = !option.dataset.themes.split(',').includes(theme);
+      });
+      const requested = Array.from(select.options).find((option) => option.value === requestedFont && !option.disabled);
+      select.value = requested ? requestedFont : 'auto';
+      return select.value;
+    }
+
+    async function toggleDisplayUiMotion() {
+      await run(async () => {
+        const stateResponse = await request('/api/state');
+        const state = await stateResponse.json();
+        await updateDisplayUi({ motion_enabled: !(state.display_ui && state.display_ui.motion_enabled) });
+      });
+    }
+
+    async function setDisplayUiGrayscaleAa(enabled) {
+      await updateDisplayUi({ grayscale_antialiasing: enabled });
+    }
+
+    async function applyDuotonePreset() {
+      const presetName = document.getElementById('duotone-preset').value;
+      const preset = duotonePresets[presetName];
+      if (!preset) {
+        return;
+      }
+      document.getElementById('duotone-bg').value = preset.background;
+      document.getElementById('duotone-fg').value = preset.text;
+      await updateDuotonePattern();
+    }
+
+    async function updateDuotonePattern() {
+      await run(async () => {
+        await request('/api/test-pattern/duotone', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            preset: document.getElementById('duotone-preset').value,
+            background: document.getElementById('duotone-bg').value,
+            text_color: document.getElementById('duotone-fg').value,
+            text: document.getElementById('duotone-text').value
+          })
+        });
+        await refresh();
+      });
+    }
+
+    async function toggleDisplayTone() {
+      await run(async () => {
+        const stateResponse = await request('/api/state');
+        const state = await stateResponse.json();
+        const enabled = !(state.display_tone && state.display_tone.enabled);
+        await updateDisplayTone({ enabled });
+      });
+    }
+
+    async function applyDisplayTonePreset() {
+      const presetName = document.getElementById('display-tone-preset').value;
+      const preset = displayTonePresets[presetName];
+      if (!preset) {
+        return;
+      }
+      document.getElementById('tone-contrast').value = preset.contrast;
+      document.getElementById('tone-brightness').value = preset.brightness;
+      document.getElementById('tone-color').value = preset.color;
+      document.getElementById('tone-sharpness').value = preset.sharpness;
+      document.getElementById('tone-binary').value = preset.binary;
+      await updateDisplayTone({ enabled: preset.enabled });
+    }
+
+    async function updateDisplayTone(overrides = {}) {
+      await run(async () => {
+        const preset = document.getElementById('display-tone-preset').value;
+        await request('/api/display/tone', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            enabled: overrides.enabled,
+            preset,
+            contrast_percent: Number(document.getElementById('tone-contrast').value),
+            brightness_percent: Number(document.getElementById('tone-brightness').value),
+            color_percent: Number(document.getElementById('tone-color').value),
+            sharpness_percent: Number(document.getElementById('tone-sharpness').value),
+            binary_threshold: Number(document.getElementById('tone-binary').value)
+          })
+        });
+        await refresh();
+      });
+    }
+
+    async function startVideoTest() {
+      await run(async () => {
+        await request('/api/video/start', { method: 'POST' });
+        await refresh();
+      });
+    }
+
+    async function askHermes() {
+      await run(async () => {
+        const response = await request('/api/hermes/stream', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt: document.getElementById('prompt').value })
+        });
+        if (!response.body) throw new Error('Hermes stream is unavailable');
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+        let reply = '';
+        while (true) {
+          const { value, done } = await reader.read();
+          buffer += decoder.decode(value || new Uint8Array(), { stream: !done });
+          const frames = buffer.split('\n\n');
+          buffer = frames.pop() || '';
+          for (const frame of frames) {
+            const dataLine = frame.split('\n').find((line) => line.startsWith('data: '));
+            if (!dataLine) continue;
+            const event = JSON.parse(dataLine.slice(6));
+            const payload = event.payload || {};
+            if (event.type === 'message.start') {
+              reply = '';
+              document.getElementById('hermes-reply').textContent = '正在思考…';
+            } else if (event.type === 'message.delta') {
+              reply += payload.text || '';
+              document.getElementById('hermes-reply').textContent = reply;
+            } else if (event.type === 'tool.start') {
+              document.getElementById('hermes-reply').textContent = payload.context || `正在使用 ${payload.name || '工具'}…`;
+            } else if (event.type === 'tool.complete') {
+              document.getElementById('hermes-reply').textContent = payload.summary || `${payload.name || '工具'} 已完成，正在整理回复…`;
+            } else if (event.type === 'status.update') {
+              document.getElementById('hermes-reply').textContent = payload.text || 'Hermes 正在处理…';
+            } else if (event.type === 'message.complete') {
+              reply = payload.text || reply;
+              document.getElementById('hermes-reply').textContent = reply;
+            } else if (event.type === 'done') {
+              document.getElementById('hermes-reply').textContent = payload.reply || payload.error || reply;
+            }
+          }
+          if (done) break;
+        }
+        await refresh();
+      });
+    }
+
+    async function newHermesSession() {
+      await run(async () => {
+        const response = await request('/api/hermes/session/new', { method: 'POST' });
+        const payload = await response.json();
+        document.getElementById('hermes-reply').textContent = payload.error || `新会话已就绪 · ${payload.session_id || ''}`;
+        await refresh();
+      });
+    }
+
+    async function interruptHermes() {
+      await run(async () => {
+        await request('/api/hermes/interrupt', { method: 'POST' });
+        document.getElementById('hermes-reply').textContent = '已打断';
+        await refresh();
+      });
+    }
+
+    async function refreshVoiceStatus() {
+      await run(async () => {
+        await request('/api/voice/status');
+        await refresh();
+      });
+    }
+
+    async function toggleVoiceEnabled() {
+      await run(async () => {
+        const stateResponse = await request('/api/state');
+        const state = await stateResponse.json();
+        await request('/api/voice/enable', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ enabled: !state.hermes.voice_enabled })
+        });
+        await refresh();
+      });
+    }
+
+    async function toggleVoiceRecording() {
+      await run(async () => {
+        const stateResponse = await request('/api/state');
+        const state = await stateResponse.json();
+        const listening = state.hermes.voice_status === 'listening';
+        if (!listening) {
+          await request('/api/voice/silence', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ seconds: Number(document.getElementById('voice-silence-seconds').value) })
+          });
+        }
+        await request(listening ? '/api/voice/record/stop' : '/api/voice/record/start', {
+          method: 'POST'
+        });
+        await refresh();
+      });
+    }
+
+    async function updateVoiceSilenceDuration() {
+      await run(async () => {
+        await request('/api/voice/silence', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ seconds: Number(document.getElementById('voice-silence-seconds').value) })
+        });
+        await refresh();
+      });
+    }
+
+    async function light(on, brightness) {
+      await run(async () => {
+        await request('/api/light', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ on, brightness })
+        });
+        await refresh();
+      });
+    }
+
+    async function toggleUnifiedFlush() {
+      await run(async () => {
+        const stateResponse = await request('/api/state');
+        const state = await stateResponse.json();
+        await request('/api/display/unified-flush', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ enabled: !state.link.unified_flush })
+        });
+        await refresh();
+      });
+    }
+
+    async function updateTransportOptions() {
+      await run(async () => {
+        updateTransportOptionVisibility(document.getElementById('transport-mode').value);
+        const indexedBpp = Number(document.getElementById('indexed-bpp').value);
+        indexedProtectedColors = resizeIndexedProtectedColors(indexedProtectedColors, indexedBpp);
+        await request('/api/display/transport', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            transport_mode: document.getElementById('transport-mode').value,
+            compression_mode: document.getElementById('compression-mode').value,
+            tile_width: Number(document.getElementById('tile-width').value),
+            tile_height: Number(document.getElementById('tile-height').value),
+            mjpeg_quality: Number(document.getElementById('mjpeg-quality').value),
+            mjpeg_subsampling: document.getElementById('mjpeg-subsampling').value,
+            indexed_bpp: indexedBpp,
+            indexed_protected_colors: indexedProtectedColors,
+            preview_fps_limit: Number(document.getElementById('preview-fps-limit').value),
+            backlight_percent: Number(document.getElementById('backlight-percent').value),
+            panel_gamma: document.getElementById('panel-gamma').value
+          })
+        });
+        await refresh();
+      });
+    }
+
+    async function togglePreviewFpsLimit() {
+      await run(async () => {
+        const stateResponse = await request('/api/state');
+        const state = await stateResponse.json();
+        await request('/api/display/transport', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ preview_fps_limited: !state.link.preview_fps_limited })
+        });
+        await refresh();
+      });
+    }
+
+    async function toggleNack() {
+      await run(async () => {
+        const stateResponse = await request('/api/state');
+        const state = await stateResponse.json();
+        await request('/api/display/transport', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ nack_enabled: !state.link.nack_enabled })
+        });
+        await refresh();
+      });
+    }
+
+    async function toggleNackFrameEnd() {
+      await run(async () => {
+        const stateResponse = await request('/api/state');
+        const state = await stateResponse.json();
+        await request('/api/display/transport', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ resend_frame_end_on_nack: !state.link.resend_frame_end_on_nack })
+        });
+        await refresh();
+      });
+    }
+
+    async function toggleEspLog() {
+      await run(async () => {
+        const stateResponse = await request('/api/state');
+        const state = await stateResponse.json();
+        await request('/api/display/transport', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ esp_log_enabled: !state.link.esp_log_enabled })
+        });
+        await refresh();
+      });
+    }
+
+    async function refresh() {
+      await run(async () => {
+        const response = await request('/api/state');
+        renderState(await response.json());
+      });
+    }
+
+    function scheduleStateRefresh(delayMs) {
+      if (stateRefreshTimer) {
+        clearTimeout(stateRefreshTimer);
+      }
+      stateRefreshTimer = setTimeout(async () => {
+        await refresh();
+        scheduleStateRefresh(stateRefreshIntervalMs);
+      }, delayMs);
+    }
+
+    let webrtcPeer = null;
+    let webrtcChannel = null;
+    let webrtcOfferId = null;
+    let webrtcSendTimer = null;
+    let webrtcFrameId = 0;
+
+    function isLanCandidate(address) {
+      return address.startsWith('192.168.') || address.startsWith('10.') || /^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(address);
+    }
+
+    function renderCandidateList(title, candidates) {
+      if (!candidates.length) {
+        return '<div><strong>' + title + '</strong>: none</div>';
+      }
+      const lines = candidates.map(candidate => {
+        const good = isLanCandidate(candidate.address) && !candidate.address.startsWith('172.18.');
+        const css = good ? 'candidate-good' : 'candidate-bad';
+        return '<div class="' + css + '">' +
+          candidate.protocol.toUpperCase() + ' ' +
+          candidate.address + ':' + candidate.port +
+          ' typ ' + candidate.type +
+          '</div>';
+      }).join('');
+      return '<div><strong>' + title + '</strong>' + lines + '</div>';
+    }
+
+    async function updateIceDiagnostics() {
+      const box = document.getElementById('ice-diagnostics');
+      if (document.getElementById('transport-mode').value !== 'webrtc') {
+        return;
+      }
+      try {
+        const response = await fetch('/api/webrtc/diagnostics');
+        if (!response.ok) {
+          return;
+        }
+        const diagnostics = await response.json();
+        const offerCandidates = diagnostics.offer_candidates || [];
+        const answerCandidates = diagnostics.answer_candidates || [];
+        const hasTunOnly = offerCandidates.length > 0 && offerCandidates.every(candidate => candidate.address.startsWith('172.18.') || candidate.address.includes(':'));
+        box.innerHTML =
+          '<div><strong>Offer</strong>: ' + (diagnostics.offer_id || 'none') + '</div>' +
+          renderCandidateList('Browser candidates', offerCandidates) +
+          renderCandidateList('ESP32 candidates', answerCandidates) +
+          (hasTunOnly ? '<div class="candidate-bad">Browser is still advertising TUN/IPv6 candidates; use Open WebRTC Chrome or add a LAN bypass.</div>' : '');
+      } catch (error) {
+        box.textContent = error.message;
+      }
+    }
+
+    async function launchWebRTCChrome() {
+      await run(async () => {
+        const response = await request('/api/webrtc/launch-chrome', { method: 'POST' });
+        const payload = await response.json();
+        document.getElementById('ice-diagnostics').textContent = 'Started dedicated Chrome pid=' + payload.pid;
+      });
+    }
+
+    async function resetWebRTCSignaling() {
+      await run(async () => {
+        if (webrtcPeer) {
+          webrtcPeer.close();
+          webrtcPeer = null;
+          webrtcChannel = null;
+        }
+        stopWebRTCSend();
+        await request('/api/webrtc/reset', { method: 'POST' });
+        await updateIceDiagnostics();
+      });
+    }
+
+    async function getLocalCandidateAddress() {
+      const response = await request('/api/webrtc/local-candidate-address');
+      const payload = await response.json();
+      return payload.address;
+    }
+
+    function rewriteHostCandidatesForLan(sdp, address) {
+      if (!address) {
+        return sdp;
+      }
+      return sdp.split('\r\n').map(line => {
+        if (line.startsWith('c=IN IP4 ')) {
+          return 'c=IN IP4 ' + address;
+        }
+        if (!line.startsWith('a=candidate:') || !line.includes(' typ host')) {
+          return line;
+        }
+        const parts = line.split(' ');
+        if (parts.length < 6) {
+          return line;
+        }
+        if (parts[4].startsWith('172.18.') || parts[4].includes(':') || parts[4].endsWith('.local')) {
+          parts[4] = address;
+        }
+        return parts.join(' ');
+      }).join('\r\n');
+    }
+
+    async function waitForIceGatheringComplete(peer) {
+      if (peer.iceGatheringState === 'complete') {
+        return;
+      }
+      await new Promise(resolve => {
+        peer.addEventListener('icegatheringstatechange', () => {
+          if (peer.iceGatheringState === 'complete') {
+            resolve();
+          }
+        });
+      });
+    }
+
+    async function waitForWebRTCAnswer(offerId) {
+      for (let attempt = 0; attempt < 120; attempt += 1) {
+        const response = await fetch('/api/webrtc/answer/' + offerId);
+        if (response.ok) {
+          return response.json();
+        }
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+      throw new Error('Timed out waiting for ESP32 WebRTC answer');
+    }
+
+    async function connectWebRTC() {
+      await run(async () => {
+        if (webrtcPeer) {
+          webrtcPeer.close();
+        }
+        webrtcPeer = new RTCPeerConnection({ iceServers: [] });
+        webrtcChannel = webrtcPeer.createDataChannel('espagent-display', { ordered: false, maxRetransmits: 0 });
+        webrtcChannel.binaryType = 'arraybuffer';
+        webrtcChannel.onopen = () => {
+          document.getElementById('webrtc-connect').textContent = 'WebRTC: Connected';
+        };
+        webrtcChannel.onclose = () => {
+          document.getElementById('webrtc-connect').textContent = 'Connect WebRTC';
+          stopWebRTCSend();
+        };
+        const offer = await webrtcPeer.createOffer();
+        await webrtcPeer.setLocalDescription(offer);
+        await waitForIceGatheringComplete(webrtcPeer);
+        const localCandidateAddress = await getLocalCandidateAddress();
+        const signaledOffer = {
+          type: webrtcPeer.localDescription.type,
+          sdp: rewriteHostCandidatesForLan(webrtcPeer.localDescription.sdp, localCandidateAddress)
+        };
+        const response = await request('/api/webrtc/offer', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(signaledOffer)
+        });
+        webrtcOfferId = (await response.json()).offer_id;
+        await updateIceDiagnostics();
+        const answer = await waitForWebRTCAnswer(webrtcOfferId);
+        await webrtcPeer.setRemoteDescription(answer);
+        await updateIceDiagnostics();
+      });
+    }
+
+    function makeWebRTCFramePacket(frameBytes) {
+      const headerLength = 20;
+      const packet = new Uint8Array(headerLength + frameBytes.byteLength);
+      const view = new DataView(packet.buffer);
+      packet[0] = 0x45; // E
+      packet[1] = 0x41; // A
+      packet[2] = 0x57; // W
+      packet[3] = 0x46; // F
+      view.setUint8(4, 1);
+      view.setUint8(5, 1);
+      view.setUint8(6, 1);
+      view.setUint8(7, 0);
+      view.setUint32(8, ++webrtcFrameId, true);
+      view.setUint16(12, 240, true);
+      view.setUint16(14, 320, true);
+      view.setUint32(16, frameBytes.byteLength, true);
+      packet.set(new Uint8Array(frameBytes), headerLength);
+      return packet.buffer;
+    }
+
+    async function sendWebRTCFrame() {
+      if (!webrtcChannel || webrtcChannel.readyState !== 'open') {
+        return;
+      }
+      if (webrtcChannel.bufferedAmount > 512 * 1024) {
+        return;
+      }
+      const response = await request('/api/display/frame.rgb565');
+      const frame = await response.arrayBuffer();
+      webrtcChannel.send(makeWebRTCFramePacket(frame));
+    }
+
+    function stopWebRTCSend() {
+      if (webrtcSendTimer) {
+        clearInterval(webrtcSendTimer);
+        webrtcSendTimer = null;
+      }
+      document.getElementById('webrtc-send-toggle').textContent = 'Send: Off';
+    }
+
+    async function toggleWebRTCSend() {
+      await run(async () => {
+        if (webrtcSendTimer) {
+          stopWebRTCSend();
+          return;
+        }
+        if (!webrtcChannel || webrtcChannel.readyState !== 'open') {
+          await connectWebRTC();
+        }
+        await sendWebRTCFrame();
+        webrtcSendTimer = setInterval(sendWebRTCFrame, 200);
+        document.getElementById('webrtc-send-toggle').textContent = 'Send: On';
+      });
+    }
+
+    setInterval(updateIceDiagnostics, 2000);
+    schedulePreviewFrame(0);
+    scheduleStateRefresh(0);
+    refreshVoiceStatus();
+  </script>
+</body>
+</html>

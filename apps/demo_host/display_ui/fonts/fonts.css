@@ -1,0 +1,48 @@
+@font-face {
+  font-family: "Ark Pixel 10px SC";
+  src: url("ark-pixel/ark-pixel-10px-zh-cn.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+}
+
+#display {
+  --font-chinese: "DengXian", "Microsoft YaHei", sans-serif;
+  --font-latin: "Bahnschrift", "Segoe UI", sans-serif;
+  --font-numeric: "Bahnschrift", "Consolas", monospace;
+  font-family: var(--font-chinese);
+}
+
+#display[data-theme="first"][data-font-chinese="auto"] { --font-chinese: "Microsoft YaHei", "PingFang SC", sans-serif; }
+#display[data-theme="first"][data-font-latin="auto"] { --font-latin: "Microsoft YaHei", "Segoe UI", sans-serif; }
+#display[data-theme="first"][data-font-numeric="auto"] { --font-numeric: "Ark Pixel 10px SC", monospace; }
+#display[data-theme="second"][data-font-latin="auto"] { --font-latin: "Bahnschrift", "Segoe UI", sans-serif; }
+#display[data-theme="second"][data-font-numeric="auto"] { --font-numeric: "Bahnschrift", "Consolas", monospace; }
+
+#display[data-font-chinese="auto"],
+#display[data-font-chinese="modern"] { --font-chinese: "DengXian", "Microsoft YaHei", sans-serif; }
+#display[data-font-chinese="ui"] { --font-chinese: "Microsoft YaHei", "PingFang SC", sans-serif; }
+#display[data-font-chinese="editorial"] { --font-chinese: "SimSun", "Songti SC", serif; }
+#display[data-font-chinese="humanist"] { --font-chinese: "KaiTi", "STKaiti", serif; }
+#display[data-font-chinese="pixel"] { --font-chinese: "Ark Pixel 10px SC", monospace; }
+
+#display[data-font-latin="modern"] { --font-latin: "Bahnschrift", "Segoe UI", sans-serif; }
+#display[data-font-latin="ui"] { --font-latin: "Segoe UI", "Microsoft YaHei", sans-serif; }
+#display[data-font-latin="editorial"] { --font-latin: "Georgia", "Times New Roman", serif; }
+#display[data-font-latin="industrial"] { --font-latin: "Bahnschrift", "Arial Narrow", sans-serif; }
+#display[data-font-latin="pixel"] { --font-latin: "Ark Pixel 10px SC", monospace; }
+
+#display[data-font-numeric="modern"] { --font-numeric: "Bahnschrift", "Segoe UI", sans-serif; }
+#display[data-font-numeric="editorial"] { --font-numeric: "Georgia", "Times New Roman", serif; }
+#display[data-font-numeric="industrial"] { --font-numeric: "Bahnschrift", "Arial Narrow", sans-serif; }
+#display[data-font-numeric="mono"] { --font-numeric: "Consolas", "Courier New", monospace; }
+#display[data-font-numeric="pixel"] { --font-numeric: "Ark Pixel 10px SC", monospace; }
+
+#display[data-font-chinese="pixel"],
+#display[data-font-latin="pixel"],
+#display[data-font-numeric="pixel"],
+#display[data-theme="first"][data-font-numeric="auto"] {
+  font-synthesis: none;
+  font-kerning: none;
+  text-rendering: geometricPrecision;
+}

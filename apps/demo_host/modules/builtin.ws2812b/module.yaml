@@ -1,0 +1,28 @@
+id: builtin.ws2812b
+name: 灯条
+version: 0.5.0
+description: 通过局域网控制 ESP-01S 或 ESP32-S3 SuperMini 上的 WS2812B 灯条。
+module_type: builtin
+enabled: true
+
+navigation:
+  order: 30
+  icon: light
+  pinned: true
+
+runtime:
+  type: python_module
+  entry: runtime.py:Ws2812bRuntime
+
+frontend:
+  app_pages:
+    - id: light-strip
+      path: ui/app
+      default: true
+  esp32_scenes: []
+
+permissions:
+  - network.lan
+  - light.control
+  - serial.improv
+  - serial.flash

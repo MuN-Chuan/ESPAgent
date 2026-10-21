@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="app.css?v=0.5.0">
+  <title>WS2812B 灯条</title>
+</head>
+<body>
+  <main class="module-page">
+    <header class="module-head">
+      <div><span class="section-index">03 / LIGHT STRIP</span><h1>WS2812B 灯条</h1></div>
+      <div class="head-actions"><span id="status" class="status-label">正在连接</span><button id="refresh" class="icon-button" type="button" title="刷新设备状态" aria-label="刷新设备状态">↻</button></div>
+    </header>
+
+    <section class="light-layout">
+      <div class="light-stage">
+        <div class="stage-head"><span id="device-name">WLED 控制器</span><span id="device-ip">LAN --</span></div>
+        <div id="light-preview" class="light-preview"><div class="light-core"></div></div>
+        <div class="stage-foot"><span id="firmware">WLED --</span><span id="led-count">LED --</span></div>
+      </div>
+
+      <div class="controls">
+        <section class="control-section">
+          <div class="section-heading"><span>01</span><div><h2>灯光</h2><p>颜色与亮度会合并为最新状态后发送，不阻塞显示传输。</p></div></div>
+          <label class="switch-row"><span><strong>电源</strong><small id="power-detail">灯条已关闭</small></span><button id="power" class="switch" type="button" role="switch" aria-checked="false"><i></i></button></label>
+          <div class="field color-field"><span>颜色</span><input id="color" type="color" value="#ffffff" aria-label="灯条颜色"><output id="color-value">#FFFFFF</output></div>
+          <div class="swatches" aria-label="常用颜色">
+            <button type="button" data-color="#ffffff" style="--swatch:#ffffff" title="白色"></button>
+            <button type="button" data-color="#ff3b30" style="--swatch:#ff3b30" title="红色"></button>
+            <button type="button" data-color="#ff9500" style="--swatch:#ff9500" title="暖橙"></button>
+            <button type="button" data-color="#ffd60a" style="--swatch:#ffd60a" title="黄色"></button>
+            <button type="button" data-color="#34c759" style="--swatch:#34c759" title="绿色"></button>
+            <button type="button" data-color="#0a84ff" style="--swatch:#0a84ff" title="蓝色"></button>
+            <button type="button" data-color="#bf5af2" style="--swatch:#bf5af2" title="紫色"></button>
+          </div>
+          <div class="effect-control">
+            <div class="effect-label"><span>预设特效</span><strong id="active-effect">纯色</strong></div>
+            <div id="effect-grid" class="effect-grid" aria-label="WLED 预设特效"></div>
+            <p id="effect-status">正在读取 WLED 效果列表</p>
+          </div>
+          <label class="range-field"><span>亮度</span><input id="brightness" type="range" min="0" max="100" value="100"><output id="brightness-value">100%</output></label>
+          <label class="count-field"><span>灯珠数量</span><input id="led-count-input" type="number" min="1" max="1200" step="1" value="60"><button id="save-led-count" type="button">保存</button></label>
+        </section>
+
+        <section class="control-section connection-section">
+          <div class="section-heading"><span>02</span><div><h2>控制器网络</h2><p>通过 USB 写入 Wi-Fi，成功后自动切换 WLED 控制地址。</p></div></div>
+          <label class="endpoint-field"><span>设备地址</span><input id="endpoint" type="text" value="http://wled.local" spellcheck="false"><button id="save-endpoint" type="button">连接</button></label>
+          <div class="device-facts"><div><span>架构</span><strong id="architecture">--</strong></div><div><span>信号</span><strong id="signal">--</strong></div><div><span>状态</span><strong id="command-state">IDLE</strong></div></div>
+          <div class="usb-setup">
+            <div class="network-subhead"><strong>USB 网络设置</strong><button id="refresh-ports" type="button" title="重新扫描串口">重新扫描</button></div>
+            <div class="usb-fields">
+              <label class="port-field"><span>控制器串口</span><select id="serial-port"></select></label>
+              <label><span>Wi-Fi 名称</span><input id="wifi-ssid" type="text" maxlength="32" autocomplete="off"></label>
+              <label><span>Wi-Fi 密码</span><input id="wifi-password" type="password" maxlength="64" autocomplete="new-password"></label>
+              <button id="provision" type="button">写入并连接</button>
+            </div>
+            <div class="network-result"><span id="network-port">PORT --</span><span id="network-ssid">SSID --</span><span id="network-ip">IP --</span></div>
+            <p id="provision-status" class="provision-status">连接 USB 后可首次配网或修改现有网络。</p>
+          </div>
+        </section>
+
+        <section class="control-section firmware-section">
+          <div class="section-heading"><span>03</span><div><h2>控制器固件</h2><p id="flash-target-description">应用内置 WLED 与烧录器，无需安装 ESP-IDF。</p></div></div>
+          <label class="firmware-target-field"><span>开发板</span><select id="firmware-target" aria-label="灯条控制器开发板"></select></label>
+          <div class="firmware-status">
+            <div><span>固件</span><strong id="flash-version">WLED --</strong></div>
+            <div><span>端口</span><strong id="flash-port">--</strong></div>
+            <div><span>状态</span><strong id="flash-state">READY</strong></div>
+          </div>
+          <div class="flash-progress" role="progressbar" aria-label="烧录进度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i id="flash-progress"></i></div>
+          <div class="flash-actions"><p id="flash-message">连接控制器后即可烧录</p><button id="flash-firmware" type="button">烧录 WLED</button></div>
+          <p id="hardware-note" class="hardware-note">选择开发板后显示接线说明。</p>
+          <details class="flash-log"><summary>烧录日志</summary><pre id="flash-log">暂无日志</pre></details>
+        </section>
+        <p id="error" class="error" hidden></p>
+      </div>
+    </section>
+  </main>
+  <script src="app.js?v=0.5.0"></script>
+</body>
+</html>

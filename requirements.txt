@@ -1,0 +1,21 @@
+# Python 3.11 or newer is required.
+# Keep this list synchronized with apps/demo_host/pyproject.toml.
+
+fastapi>=0.111
+uvicorn[standard]>=0.30
+numpy>=2.0
+pillow>=10.4
+pydantic>=2.8
+pydantic-settings>=2.3
+httpx>=0.27
+python-dotenv>=1.0
+opencv-python-headless>=4.10
+websocket-client>=1.8
+msgpack>=1.1
+sounddevice>=0.5
+pywebview>=5.4
+pyyaml>=6.0
+Pinyin2Hanzi==0.1.1
+esptool>=4.11,<5
+pyserial>=3.5,<4
+dxcam>=0.0.5; platform_system == "Windows"
